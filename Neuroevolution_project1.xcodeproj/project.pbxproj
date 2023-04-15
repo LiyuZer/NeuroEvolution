@@ -30,6 +30,10 @@
 		4C40DC622981DBCD00C0CB16 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon.png; path = ../icon.png; sourceTree = "<group>"; };
 		4C40DC6C2981E28600C0CB16 /* Universe.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Universe.cpp; sourceTree = "<group>"; };
 		4C40DC6D2981E28600C0CB16 /* Universe.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Universe.hpp; sourceTree = "<group>"; };
+		4CA047D029EB6BBF004FA554 /* Node.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Node.hpp; sourceTree = "<group>"; };
+		4CA047D329EB6BF6004FA554 /* Utilities.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Utilities.hpp; path = Neuroevolution_project1/Utilities.hpp; sourceTree = "<group>"; };
+		4CA047D629EB6C18004FA554 /* Matrix.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Matrix.hpp; sourceTree = "<group>"; };
+		4CA047D929EB6C41004FA554 /* Network.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Network.hpp; path = Neuroevolution_project1/Network.hpp; sourceTree = "<group>"; };
 		4CBECEDD2994ED9C001BA0EF /* organism.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = organism.cpp; sourceTree = "<group>"; };
 		4CBECEDE2994ED9C001BA0EF /* organism.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = organism.hpp; sourceTree = "<group>"; };
 		4CE290AC29A9ACCD00462A0C /* organism_viewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = organism_viewer.cpp; sourceTree = "<group>"; };
@@ -50,6 +54,10 @@
 		4C40DC472981DBCD00C0CB16 = {
 			isa = PBXGroup;
 			children = (
+				4CA047D929EB6C41004FA554 /* Network.hpp */,
+				4CA047D629EB6C18004FA554 /* Matrix.hpp */,
+				4CA047D329EB6BF6004FA554 /* Utilities.hpp */,
+				4CA047D029EB6BBF004FA554 /* Node.hpp */,
 				4CBECEDD2994ED9C001BA0EF /* organism.cpp */,
 				4CBECEDE2994ED9C001BA0EF /* organism.hpp */,
 				4C40DC6C2981E28600C0CB16 /* Universe.cpp */,

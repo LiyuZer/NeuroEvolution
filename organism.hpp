@@ -17,10 +17,10 @@
 #include <random>
 #include <sstream>
 #include <climits>
-#include "/Users/liyuzerihun/Documents/MLT/Node.hpp"
-#include "/Users/liyuzerihun/Documents/MLT/Matrix.hpp"
-#include "/Users/liyuzerihun/Documents/MLT/Utilities.cpp"
-#include "/Users/liyuzerihun/Documents/MLT/Network.hpp"
+#include "Node.hpp"
+#include "Matrix.hpp"
+#include "Utilities.hpp"
+#include "Network.hpp"
 
 #include <iostream>
 #include <functional>
