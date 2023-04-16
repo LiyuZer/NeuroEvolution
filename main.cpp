@@ -22,7 +22,6 @@
 
 #include "Network.hpp"
 #include "Node.hpp"
-#include "ResourcePath.hpp"
 #include "organism.hpp"
 
 using namespace std;

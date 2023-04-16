@@ -8,7 +8,6 @@
 #define Organisms_hpp
 
 #include <stdio.h>
-
 #include <chrono>
 #include <climits>
 #include <cmath>
@@ -511,11 +510,13 @@ class organism : public sim_objects {
     }
     void express_dna() {
         int marker_number = 0;  // the number of times there has been a marker gene
+        string s;
         for (int i = 0; i < genome->dominant_strand.size(); i++) {
             if (genome->dominant_strand.at(i).expression != -1 &&
                 genome->dominant_strand.at(i)
                     .is_active) {  // If the gene is a marked gene add 1 if not then express the gene
                 if (genome->dominant_strand.at(i).is_parameter) {
+                    s=s+"p";
                     parameter_node* ptr = new parameter_node(main, true, 0);
                     ptr->getInputVector()->push_back(genome->dominant_strand.at(i).parameter_index);
                     create_nodes.push_back(ptr);  // paramter node is just created with it's value
@@ -524,6 +525,7 @@ class organism : public sim_objects {
                     genome->map[genome->dominant_strand.at(i).hash] = ptr;
                     genome->dominant_strand.at(i).ptr = ptr;
                 } else if (genome->dominant_strand.at(i).is_value) {
+                    s=s+"v";
                     value_node* ptr = new value_node(main, true, 0);
                     ptr->getInputVector()->push_back(0);
                     create_nodes.push_back(ptr);
@@ -533,6 +535,7 @@ class organism : public sim_objects {
                     gene_node_map[ptr] = &genome->dominant_strand.at(i);
 
                 } else {
+                    s=s+"c";
                     collection_node* ptr =
                         new collection_node(genome->dominant_strand.at(i).collection_index, main, true, 0);
                     ptr->getInputVector()->push_back(1);
@@ -545,6 +548,8 @@ class organism : public sim_objects {
             }
 
             else {  // add one to marker
+                    s=s+"m";
+
                 marker_number++;
                 genome->map[genome->dominant_strand.at(i).hash] = nullptr;
                 if (genome->dominant_strand.at(i).expression == -1) {
@@ -555,6 +560,24 @@ class organism : public sim_objects {
             // score=score-0.0001;// this decrease the number of nodes;
         }
 
+        bool found=false;
+        if(past_forms.size()>10){
+            int size=past_forms.size();
+            for(int i=0; i<size; i++){
+                if(past_forms.at(i)==s){
+                    found=true;
+                }
+            }
+            past_forms.erase(past_forms.begin(),past_forms.begin()+1);
+            past_forms.push_back(s);
+        }
+        else{
+            past_forms.push_back(s);
+        }
+
+        if(!found){
+            score=score+10;
+        }
         for (int i = 0; i < create_nodes.size();
              i++) {  // This connecte the nodes together, if the node is not a nullptr and if the node does not connect
                      // to a node that is a nullptr then make the connection
@@ -769,6 +792,9 @@ class organism : public sim_objects {
             cout << "The hash of this node is: " << genome->dominant_strand.at(i).hash << endl;
             cout << "The synapse wait time is " << genome->dominant_strand.at(i).synapse_time << endl;
             cout << "The absolute time of this node is: " << genome->dominant_strand.at(i).abs_time << endl;
+            if(past_forms.size()>0){
+            cout << "The nearest past_form: " << past_forms.at(0)<< endl;
+            }
 
             if (genome->dominant_strand.at(i).expression != -1 && genome->dominant_strand.at(i).is_parameter) {
                 cout << "This is a parameter node" << endl;
@@ -876,6 +902,7 @@ class organism : public sim_objects {
     int num_of_synapses;
     float score;
     Network<Node>* main;
+    vector<string> past_forms;
     int size;
 };
 
