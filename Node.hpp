@@ -4,20 +4,21 @@
 //
 //  Created by Liyu Zerihun on 8/1/22.
 //
+#ifndef Node_hpp
+#define Node_hpp
+
 #include <math.h>
 #include <stdlib.h>
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "Network.hpp"
 #include "Utilities.hpp"
-#ifndef Node_hpp
-#define Node_hpp
-#include <mutex>
-#include <thread>
 
 const double momentum = 0.9;
 const int threadCount = 32;
@@ -159,7 +160,7 @@ class Node {
     void printInfoConst(Node* const p) const {
         cout << "value: " << input[0] << endl;
         cout << "address: " << p << endl;
-        cout << "Previos: " << endl;
+        cout << "Previous: " << endl;
         for (int i = 0; i < p->getPVector()->size(); i = i + 1) {
             if (p->getPVector()->at(i) != nullptr) {
                 cout << p->getPVector()->at(i) << endl;
@@ -248,12 +249,11 @@ class Node {
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
                 if (is_value_node || is_parameter) {
-                    // This is here becuase during activation for collective node the value is already updated(output
+                    // This is here because during activation for collective node the value is already updated (output
                     // value), thus it only takes place if this node is a value node
-                    this->addOutput(this->activated_value);  // Whenever a computation is made an output is added to the
-                                                             // vector, note
-                    // that the output vector is very important for final calculations as it corresposnds to the
-                    // derivative vector
+                    // Whenever a computation is made an output is added to the vector, note that the output vector is
+                    // very important for final calculations as it corresponds to the derivative vector
+                    this->addOutput(this->activated_value);
                 }
                 nextVector->at(i)->addI(activated_value);
             }
@@ -327,13 +327,6 @@ class Node {
                 }
                 for (int i = 0; i < p->getPrevVector()->size(); i = i + 1) {
                     double backPropval = val * p->getDerivative()->at(i);
-                    //                    if(backPropval>1){
-                    //                        backPropval=0.9;
-                    //                    }
-                    //                    else if(backPropval<-1){
-                    //                        backPropval=-0.9;
-                    //                    }
-                    //
                     backProp(p->getPrevVector()->at(i), backPropval, target, count, endNodes);
                 }
 
@@ -470,8 +463,7 @@ class collection_node : public Node {
             }
         }
         mut.unlock();
-        //            cout<<" Being converted to: "<<endl;
-        //            this->printInfo(this);
+
         return *this;
     }
 
@@ -513,7 +505,6 @@ class collection_node : public Node {
         setActivatedValue(getOutput(0));
         int temp = getInputVector()->size();
         special_propogate();
-        // cout<<getOutputVector()->at(0)<<endl;
         getInputVector()->erase(getInputVector()->begin(), getInputVector()->begin() + temp);
         getInputVector()->push_back(1);
         getOutputVector()->clear();
@@ -566,16 +557,7 @@ class value_node : public Node {
                 }
             }
         }
-        //            cout<<" Being converted to: "<<endl;
-        //            this->printInfo(this);
     }
-
-    //    value_node operator=(value_node& right){
-    //        this->addNext(&right);
-    //        right.addPrev(this);
-    //
-    //        return *this;
-    // }
 
     value_node& operator=(const value_node& right) {
         right.setActiveFalse();
@@ -606,20 +588,11 @@ class value_node : public Node {
                 }
             }
         }
-        //            cout<<" Being converted to: "<<endl;
-        //            this->printInfo(this);
+
         return *this;
     }
 
     virtual value_node& operator+(value_node& right) {
-        // cout<<this<<" "<<&right<<endl<<endl;
-        //        collection_node* c= new collection_node(0,this->getNetworkPointer(), true);
-        //        *this>>=*c;
-        //        right>>=*c;
-        //        value_node* sum_pointer= new value_node (this->getNetworkPointer(), true);
-        //        *c>>*sum_pointer;
-        //        c->activate();
-
         value_node* sum_pointer = new value_node(this->getInput(0) + right.getInput(0), &right,
                                                  right.getNetworkPointer(), true, this->getThreadID());
         sum_pointer->addPrev(this);
@@ -633,17 +606,6 @@ class value_node : public Node {
 
         return *sum_pointer;
     }
-    //    value_node& operator+(double right){
-    //       // cout<<this<<" "<<&right<<endl<<endl;
-    //
-    //
-    //       value_node* sum_pointer= new value_node (this->getInput(0)+right,this, this->getNetworkPointer(), true);
-    //        this->addNext(sum_pointer);
-    //        this->addOutput(this->getInput(0));
-    //        sum_pointer->getDerivative()->push_back(1);
-    //
-    //        return *sum_pointer;
-    //    }
 
     value_node& operator&(double right) {
         value_node* sum_pointer =
@@ -665,13 +627,6 @@ class value_node : public Node {
     }
 
     value_node& operator-(value_node& right) {
-        // cout<<this<<" "<<&right<<endl<<endl;
-        //        collection_node* c= new collection_node(4,this->getNetworkPointer(), true);
-        //        *this>>=*c;
-        //        right>>=*c;
-        //        value_node* sum_pointer= new value_node (this->getNetworkPointer(), true);
-        //        *c>>*sum_pointer;
-        //        c->activate();
         value_node* sum_pointer = new value_node(this->getInput(0) - right.getInput(0), &right,
                                                  right.getNetworkPointer(), true, this->getThreadID());
         sum_pointer->addPrev(this);
@@ -713,20 +668,6 @@ class value_node : public Node {
 
         return *sum_pointer;
     }
-
-    //    value_node& operator*(double right){
-    //
-    //
-    //        value_node* sum_pointer= new value_node (this->getInput(0)*right,this, this->getNetworkPointer(), true);
-    //
-    //         this->addNext(sum_pointer);
-    //        this->addOutput(this->getInput(0));
-    //        sum_pointer->getDerivative()->push_back(right);
-    //
-    //
-    //         return *sum_pointer;
-    //
-    //    }
 
     value_node& operator^(double right) {
         value_node* sum_pointer = new value_node((double)pow(this->getInput(0), right), this, this->getNetworkPointer(),
@@ -997,40 +938,5 @@ class parameter_node : public value_node {
 
     ;
 };
-
-// static void forwardProp(Node* p, Node* prev ,double val, int& count){
-//
-//
-//     if(p->get_is_parameter()){
-//         count++;
-//     }
-//     if(p->hasBeenSeen()){
-//
-//     }
-//
-//     else{
-//         p->setprevNumber(p->getPrevVector()->size());
-//         p->zero();
-//         p->forSeen();
-//
-//     }
-//
-//
-//     if(prev!=nullptr){
-//     p->addForwardNumber();
-//     }
-//
-//     p->addInput(val, prev);
-//     if(p->getForwardNumber()==p->getPreviousNumber()){
-//
-//         p->specialActivation();
-//         p->addOutput(p->getActivatedValue());
-//
-//     for(int i=0; i<p->getNext()->size(); i++){
-//
-//         forwardProp(p->getNextVector()->at(i), p, p->getActivatedValue(),count);
-//         }
-//
-//     }
 
 #endif /* Node_hpp */
