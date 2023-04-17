@@ -159,9 +159,7 @@ static void randomOutput(double& val, double probability_of_change, double step_
 static genes& randomGene(genes& first_gene, genes& second_gene, double first_mutator, double second_mutator,
                          double& return_value, double probablility_of_change) {
     genes* returnGene;
-    double division = log10(probablility_of_change) - 2;  // this i the division for the random number
     double random = uniformTest(0, 1, 1);                 // our radnom number
-    double random_num = 0.5;                              // just some arbitrary value that will be checked
     if (random == 0) {  // if the guess is within the range then the addition will be added
         return_value = first_mutator;
         return first_gene;
