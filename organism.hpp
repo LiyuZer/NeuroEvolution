@@ -174,7 +174,7 @@ static void mutate_connection(double mutator, vector<genes>& strand_of_genes, ge
     value = uniformTest(0, 10, 1);
     if (value < 5) {
         int erase = uniformTest(0, 10, 1);
-        if (erase > 9 && x1.node_connections.size() > 0) {
+        if (erase > 7 && x1.node_connections.size() > 0) {
             double index = uniformTest(0, x1.node_connections.size() - 1, 1);
             x1.node_connections_found.erase(x1.node_connections.at(index));
             x1.node_connections.erase(x1.node_connections.begin() + index);
@@ -198,22 +198,22 @@ static genes* make_random_gene(dna& genome) {
         new_gene->is_collection = false;
         new_gene->expression = 0;
         new_gene->parameter_index = uniformTest(-1, 1, 1000);
-        new_gene->synapse_time = uniformTest(1, 3, 1);
+        new_gene->synapse_time = uniformTest(1, 9, 1);
 
     } else if (param < 70) {
         new_gene->is_parameter = false;
         new_gene->is_value = true;
         new_gene->is_collection = false;
         new_gene->expression = 1;
-        new_gene->synapse_time = uniformTest(1, 3, 1);
+        new_gene->synapse_time = uniformTest(1, 9, 1);
 
     } else if (param < 90) {
         new_gene->is_parameter = false;
         new_gene->is_value = false;
         new_gene->is_collection = true;
         new_gene->expression = 2;
-        new_gene->synapse_time = uniformTest(1, 10, 1);
-        new_gene->collection_index = uniformTest(0, 2, 1);
+        new_gene->synapse_time = uniformTest(1, 9, 1);
+        new_gene->collection_index = uniformTest(0, 6, 1);
         new_gene->collection_index_mutator = uniformTest(0, 0.1, 1000);
         new_gene->collective_time = 2;
 
@@ -333,7 +333,7 @@ static void mutate_dna(dna& genome) {
     }
 
     for (int i = 0; i < genome.dominant_strand.size(); i++) {
-        if (uniformTest(0, 100, 1) == 5) {
+        if (uniformTest(0, 100, 1) < 5) {
             mutate_connection(genome.dominant_strand.at(i).mutator_connections, genome.dominant_strand,
                               genome.dominant_strand.at(i));
         }
@@ -378,8 +378,8 @@ static dna* instruction_dna(int number_of_nodes, int array[], int size) {
 
 dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = (double)uniformTest(0, 0.4, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0, 1000);
+    new_dna->mutator_add = (double)uniformTest(0, 0.05, 1000);
+    new_dna->mutator_delete = (double)uniformTest(0, 0.0005, 1000);
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     if (mater.dominant_strand.size() > matee.dominant_strand.size()) {
@@ -443,8 +443,8 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
 
 dna* asexual_reproduce(dna& mater) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = (double)uniformTest(0, 0.1, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0.1, 1000);
+    new_dna->mutator_add = (double)uniformTest(0, 0.01, 1000);
+    new_dna->mutator_delete = (double)uniformTest(0, 0.001, 1000);
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     int m = mater.dominant_strand.size();
@@ -576,7 +576,7 @@ class organism : public sim_objects {
         }
 
         if(!found){
-            score=score+10;
+            score=score+0;
         }
         for (int i = 0; i < create_nodes.size();
              i++) {  // This connecte the nodes together, if the node is not a nullptr and if the node does not connect
@@ -672,16 +672,11 @@ class organism : public sim_objects {
             if (i < optimal.size()) {
                 if (input.size() > 0) {
                     double sub = output.at(i)->ptr->getInputVector()->at(0) - optimal.at(i);
-                    ///                    double num=(double)(1)/(pow(sub,2)+1);
-                    double num = exp(-1 * pow(sub, 2) / (2 * pow(0.1, 2)));
-                    // cout<<num<<endl;
-                    //                        if(sub==0){
-                    //                            num=1;
-                    //                        }
-                    //                        else{
-                    //                            num=-1;
-                    //                        }
-                    //
+                   double num = exp(-1 * pow(sub, 2) / (2 * pow(1, 2)));
+                //    int num=0;
+                //    if(sub==0){
+                //     num=1;
+                //    }
                     score = num + score;
                     output_num.push_back(output.at(i)->ptr->getInputVector()->at(0));
                     out.push_back(output.at(i)->ptr->getInputVector()->at(0));
@@ -701,19 +696,10 @@ class organism : public sim_objects {
     }
 
     void pr() {
-        cout << "***This is the best organism, good job, you have won the matrix***" << endl;
+        cout << "\033[36m ***This is the best organism, good job, you have won the matrix***" << endl;
         cout << "Size of input: " << size << endl;
 
-        cout << score << endl;
-
-        for (int i = 0; i < optimal.size(); i++) {
-            cout << "Optimal single: " << optimal.at(i) << endl;
-        }
-
-        for (int i = 0; i < output_num.size(); i++) {
-            cout << "Out single: " << output_num.at(i) << endl;
-        }
-
+        cout << score << endl;// prints out  the score of the organism
         int sz = 0;
         if (out.size() < in.size()) {
             sz = out.size();
@@ -721,15 +707,14 @@ class organism : public sim_objects {
             sz = in.size();
         }
         for (int i = 0; i < sz; i++) {
-            cout << "Input: " << in.at(i) << " Output: " << out.at(i) << endl;
+            cout << "\033[33mInput: " << in.at(i) << " Output: " << out.at(i) << endl;
         }
-        cout << "****" << endl;
+        cout << "\033[30m****" << endl;
     }
 
     void cycle(Node* ptr, int num) {
         // breadth first search algorithm
         vector<genes*> vec;
-
         queue<genes*> list;
         list.push(gene_node_map[ptr]);
         int max = list.size();
@@ -764,7 +749,6 @@ class organism : public sim_objects {
             max = list.size();
         }
 
-        // ptr->getInputVector
     }
 
     void print_node(Node* ptr, string hash) {
@@ -779,7 +763,7 @@ class organism : public sim_objects {
         }
     }
     void print_connections(genes& m) {
-        cout << "Connection node*****************" << endl;
+        cout << "\033[36m\033[1mConnection node*****************" << endl;
         for (int i = 0; i < m.node_connections.size(); i++) {
             print_node(genome->map[m.node_connections.at(i)], m.node_connections.at(i));
         }
@@ -787,9 +771,10 @@ class organism : public sim_objects {
         cout << endl;
     }
     void print() {
-        cout << "The size of the organism is:" << genome->dominant_strand.size() << endl;
+        cout << "\033[33m\033[1mThe size of the organism is:" << genome->dominant_strand.size() << endl;
+        //The extra characters at the beginning are the color markers for linux and mac terminals 
         for (int i = 0; i < genome->dominant_strand.size(); i++) {
-            cout << "The hash of this node is: " << genome->dominant_strand.at(i).hash << endl;
+            cout << "\033[33m\033The hash of this node is: " << genome->dominant_strand.at(i).hash << endl;
             cout << "The synapse wait time is " << genome->dominant_strand.at(i).synapse_time << endl;
             cout << "The absolute time of this node is: " << genome->dominant_strand.at(i).abs_time << endl;
             if(past_forms.size()>0){
@@ -797,7 +782,7 @@ class organism : public sim_objects {
             }
 
             if (genome->dominant_strand.at(i).expression != -1 && genome->dominant_strand.at(i).is_parameter) {
-                cout << "This is a parameter node" << endl;
+                cout << "\033[33m\033[1mThis is a parameter node" << endl;
                 cout << "Active status: " << genome->dominant_strand.at(i).is_active << endl;
                 if (genome->dominant_strand.at(i).is_active) {
                     cout << "The synapse number is: " << genome->dominant_strand.at(i).current_time << endl;
@@ -806,7 +791,7 @@ class organism : public sim_objects {
 
                 print_connections(genome->dominant_strand.at(i));
             } else if (genome->dominant_strand.at(i).expression != -1 && genome->dominant_strand.at(i).is_value) {
-                cout << "This is a value node" << endl;
+                cout << "\033[33m\033[1mThis is a value node" << endl;
                 cout << "Active status: " << genome->dominant_strand.at(i).is_active << endl;
                 if (genome->dominant_strand.at(i).is_active) {
                     cout << "The synapse number is: " << genome->dominant_strand.at(i).current_time << endl;
@@ -815,7 +800,7 @@ class organism : public sim_objects {
 
                 print_connections(genome->dominant_strand.at(i));
             } else if (genome->dominant_strand.at(i).expression != -1) {
-                cout << "This is a collection node" << endl;
+                cout << "\033[33m\033[1mThis is a collection node" << endl;
                 cout << "Active status: " << genome->dominant_strand.at(i).is_active << endl;
                 cout << "Collection Index: " << genome->dominant_strand.at(i).collection_index << endl;
                 cout << "The collection  time is " << genome->dominant_strand.at(i).collective_time << endl;
