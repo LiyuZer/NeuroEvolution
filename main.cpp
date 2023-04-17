@@ -3,7 +3,7 @@
 #include "Network.hpp"
 #include "Node.hpp"
 #include "organism.hpp"
-
+ // Technique officially works on April 12 Wednesday 
 using namespace std;
 
 int main(int, char const**) {
@@ -20,7 +20,7 @@ int main(int, char const**) {
         optimal.push_back(k);
     }
 
-    int array[3] = {55,98,55};
+    int array[6] = {55,55,98,55,98,55};
     for (int i = 0; i < 1000; i++) {
         organism* ptr = new organism(100, main, array, 19);
         creatures.push_back(ptr);
@@ -28,7 +28,7 @@ int main(int, char const**) {
             mutate_dna(*creatures.at(i)->getGenome());
         }
         ptr->express_dna();
-        ptr->synapse(1, food, optimal);
+        ptr->synapse( food, optimal);
     }
     for (int round = 0; round < 100000; round++) {
         if (round != 0) {
@@ -59,19 +59,19 @@ int main(int, char const**) {
 
                         food.push_back(ks);
                         food.push_back(mult);
-                        optimal.push_back(max);  // Technique officailly works on April 12 Wednesdayxr
-                        optimal.push_back(less);  // Technique officailly works on April 12 Wednesdayxr
+                        optimal.push_back(max); 
+                        optimal.push_back(less); 
                     }
                 }
-                for (int i = 0; i < 50; i++) {
+                for (int i = 0; i < 100; i++) {
                     organism* ptr = creatures.at(i);
                     if (k == 0) {
                         ptr->express_dna();
                     }
                     if (round < 2000) {
-                        ptr->synapse(1, food, optimal);
+                        ptr->synapse( food, optimal);
                     } else {
-                        ptr->synapse(2, food, optimal);
+                        ptr->synapse(food, optimal);
                     }
                 }
             }
@@ -82,30 +82,18 @@ int main(int, char const**) {
         int count = 0;
         if ((round + 1) % 100 == 0) {
             system("clear");
-            creatures.at(1)->pr();
-            creatures.at(1)->print();
+            creatures.at(0)->pr();
+            creatures.at(0)->print();
         }
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 50; i++) {
             for (int k = 0; k < 2; k++) {
                 int d = uniformTest(0,24, 1);
                 int t = uniformTest(0,45, 1);
-
-                //organism* child = new organism(asexual_reproduce(*creatures.at(i)->getGenome()), main);
-                organism* child = new organism(reproduce(*creatures.at(t)->getGenome(), *creatures.at(d)->getGenome()), main);
+                organism* child = new organism(asexual_reproduce(*creatures.at(i)->getGenome()), main);
+                //organism* child = new organism(reproduce(*creatures.at(t)->getGenome(), *creatures.at(d)->getGenome()), main);
                 creatures.push_back(child);
             }
         }
-
-        // for (int i = 2; i < 5; i++) {
-        //     for (int k = 0; k < 5; k++) {
-        //         organism* child = new organism(asexual_reproduce(*creatures.at(i)->getGenome()), main);
-        //         int d = uniformTest(0, 10, 1);
-        //         // organism* child=new organism(reproduce(*creatures.at(i)->getGenome(),
-        //         // *creatures.at(d)->getGenome()),main);
-        //         creatures.push_back(child);
-        //     }
-        // }
-
         if (round == 0) {
             for (int i = 0; i < 1000; i++) {
                 delete creatures.at(0);
@@ -114,7 +102,7 @@ int main(int, char const**) {
         }
 
         else {
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 100; i++) {
                 delete creatures.at(0);
                 creatures.erase(creatures.begin());
             }
