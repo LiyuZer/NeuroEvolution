@@ -141,19 +141,14 @@ static string generateHash() {
 // this function generates a random number given a probability of change, suppose you give it a number 0 and the probability of
 // change is 0.001 so after 1000 tries you might have changed 0 by a step of change(the variable step of change)
 
-static void randomOutput(double& val, double probablility_of_change, double step_of_change, double lower_bound,
+static void randomOutput(double& val, double probability_of_change, double step_of_change, double lower_bound,
                          double higher_bound) {
-    double division = log10(probablility_of_change) - 2;        // this i the division for the random number
-    double random = uniformTest(0, 1, pow(10, -1 * division));  // our radnom number
-    double random_num = 0.5;                                    // just some arbitrary value that will be checked
-    if (random_num - probablility_of_change <= random &&
-        random <=
-            random_num + probablility_of_change) {  // if the guess is within the range then the addition will be added
-
+    float division = 1/probability_of_change;        // this i the division for the random number
+    float random = uniformTest(0,division,1);  // our radnom number
+    if (random==0) {  // if the guess is within the range then the addition will be added
         int direction = uniformTest(-1, 1, 1);
         double temp_val = val;
         temp_val = temp_val + direction * step_of_change;
-
         if (temp_val < lower_bound || temp_val > higher_bound) {
         } else {
             val = temp_val;
@@ -464,8 +459,8 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
 
 dna* asexual_reproduce(dna& mater) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = (double)uniformTest(0, 0.01, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0.001, 1000);
+    new_dna->mutator_add = (double)uniformTest(0, 0, 1000);
+    new_dna->mutator_delete = (double)uniformTest(0, 0, 1000);
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     int m = mater.dominant_strand.size();
@@ -473,11 +468,11 @@ dna* asexual_reproduce(dna& mater) {  // come back to this tomorrow morning
         double return_mutator = mater.dominant_strand_mutators.at(i);
         genes* ptr = &mater.dominant_strand.at(i);
         ptr->current_time = 0;
-        if(ptr->abs_time>1000){
-            if(return_mutator>0){
-                return_mutator=return_mutator-0.0001;
-                    }
-            }
+        // if(ptr->abs_time>1000){
+        //     if(return_mutator>0){
+        //         return_mutator=return_mutator-0.0001;
+        //             }
+        //     }
         new_dna->dominant_strand.push_back(*ptr);
         new_dna->dominant_strand_mutators.push_back(return_mutator);
     }
