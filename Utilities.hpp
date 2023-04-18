@@ -12,27 +12,19 @@
 #define Utilities_hpp
 
 extern double learningRate;
+using namespace std;
 
-static double uniformRand(double div) {
-    std::random_device rd;
+static std::random_device rd;      // obtain a random number from hardware
+static std::mt19937 gen(rd());     // seed the generator
 
-    std::mt19937 e2(rd());
-
-    std::normal_distribution<> dist(0, 0.2);
-    return (double)dist(rd);
-}
-
-static double uniformTest(double x, double y, int division) {
-    std::random_device rd;                                              // obtain a random number from hardware
-    std::mt19937 gen(rd());                                             // seed the generator
-    std::uniform_int_distribution<> distr(x * division, y * division);  // define the range
-
-    return (double)distr(gen) / division;
+static int uniformTest(double x, double y, int scale_factor) {
+    std::uniform_int_distribution<> distr(x * scale_factor, y * scale_factor);  
+    return distr(gen) / scale_factor;
 }
 
 const int imageWidth = 500;
 const int imageHeight = 500;
-using namespace std;
+
 struct RGB {
     double r;
     double b;
