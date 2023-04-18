@@ -158,7 +158,6 @@ static void randomOutput(double& val, double probability_of_change, double step_
 // just gives you aradom gener from a choice a choice of two genes, and changes the value of a reference variable return value
 static genes& randomGene(genes& first_gene, genes& second_gene, double first_mutator, double second_mutator,
                          double& return_value, double probablility_of_change) {
-    genes* returnGene;
     double random = uniformTest(0, 1, 1);                 // our radnom number
     if (random == 0) {  // if the guess is within the range then the addition will be added
         return_value = first_mutator;
@@ -253,9 +252,6 @@ static genes* instruction_gene(dna& genome, int param) {
         new_gene->is_value = false;
         new_gene->is_collection = true;
         new_gene->expression = 2;
-
-        bool collection_index_mutator;
-        bool collection_index;
 
         new_gene->collection_index = uniformTest(0, 7, 1);
 
@@ -523,7 +519,6 @@ class organism : public sim_objects {
         main = m;
     }
     void express_dna() {
-        int marker_number = 0;  // the number of times there has been a marker gene
         string s;
         for (int i = 0; i < genome->dominant_strand.size(); i++) {
             if (genome->dominant_strand.at(i).expression != -1 &&
@@ -565,9 +560,7 @@ class organism : public sim_objects {
             }
 
             else {  // add one to marker
-                    s=s+"m";
-
-                marker_number++;
+                s=s+"m";
                 genome->map[genome->dominant_strand.at(i).hash] = nullptr;
                 if (genome->dominant_strand.at(i).expression == -1) {
                     active_genes.push_back(&genome->dominant_strand.at(i));
@@ -617,7 +610,6 @@ class organism : public sim_objects {
     vector<double>* synapse(vector<double>& food, vector<double>& opt) {
         output_num.clear();
         optimal.clear();
-        bool found = false;
         int count = 0;
         int der_number = 0;
         int max = 0;
@@ -640,8 +632,7 @@ class organism : public sim_objects {
         bool found_input = false;
         bool found_output = false;
         bool found_hidden = false;
-        int count_input;
-        float input_num = 0;
+        int count_input = 0;
         for (int i = 0; i < active_genes.size(); i++) {
             if (active_genes.at(i)->expression != -1 && count < 1) {
                 if (active_genes.at(i)->is_value) {
@@ -655,7 +646,6 @@ class organism : public sim_objects {
                                 count_input++;
                             }
                     }
-                    input_num++;
                     if (count_food < food.size()) {
                         active_genes.at(i)->ptr->getInputVector()->at(0) =
                             active_genes.at(i)->ptr->getInputVector()->at(0) + food.at(count_food);
@@ -740,7 +730,6 @@ class organism : public sim_objects {
         vector<genes*> vec;
         queue<genes*> list;
         list.push(gene_node_map[ptr]);
-        int max = list.size();
         while (!list.empty()) {
             genes* ptr_1 = list.front();
             list.pop();
@@ -768,8 +757,6 @@ class organism : public sim_objects {
                     list.push(gene_node_map[ptr_1->ptr->getNextVector()->at(m)]);
                 }
             }
-
-            max = list.size();
         }
 
     }
@@ -900,7 +887,6 @@ class organism : public sim_objects {
     vector<Node*> create_nodes;
     vector<genes*> active_genes;
     unordered_map<Node*, genes*> gene_node_map;
-    bool reproduction_type;
     vector<double> optimal;
     vector<double> output_num;
     vector<double> in;

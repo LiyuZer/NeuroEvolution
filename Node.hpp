@@ -351,19 +351,6 @@ class Node {
     void addDerivative(double d) const { derivative.push_back(d); }
     string getHash() const { return hash; }
     void setHash(string s) { hash = s; }
-    void zero() {
-        output.clear();  // ouputed function
-        indexFuntion;    // Index function for array of functions in utility
-        derivative.clear();
-        previous.clear();
-        next.clear();
-        active;
-        dynamicallyAllocated;
-        seen = false;  // Test variable;
-        derNumber = 0;
-        derivativeAtNode = 0;
-        string specialName;
-    }
 
    private:
     mutable vector<double> input;  // input of the node
@@ -473,10 +460,9 @@ class collection_node : public Node {
         propogate();
         for (int i = 0; i < getPrevVector()->size(); i++) {
             double temp;
-            getDerivative()->push_back(temp);
-
-            derivativeFunc[getIndexValue()](getDerivative()->at(i), getOutput(0), getPrevVector()->at(i)->getOutput(0),
+            derivativeFunc[getIndexValue()](temp, getOutput(0), getPrevVector()->at(i)->getOutput(0),
                                             getInputVector()->size(), *getIVector());
+            getDerivative()->push_back(temp);
         }
 
         getInputVector()->clear();
@@ -510,10 +496,7 @@ class collection_node : public Node {
         getOutputVector()->clear();
     }
 
-    void specialActivation() {}
-
-   private:
-    bool noActivation = false;
+    void specialActivation() override {};
 };
 
 class value_node : public Node {
@@ -934,9 +917,6 @@ class parameter_node : public value_node {
     mutable shared_ptr<double[]> previousDerivatives;
     mutable double* param;
     mutable double* increment;
-    int co;
-
-    ;
 };
 
 #endif /* Node_hpp */

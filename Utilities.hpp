@@ -41,27 +41,25 @@ struct RGB {
     void blue(double blue) { b = blue; }
 };
 
-static void seLu(vector<double>* input, vector<double>* output) {
-    for (int i = 0; i < input->size(); i++) {
-        double value = input->at(i);  // the final element of tthe input matrix
-        if (value < 0) {
-            output->push_back((double)0.001 * value);
-        } else {
-            output->push_back(value);
-        }
-    }
-}
+// static void seLu(vector<double>* input, vector<double>* output) {
+//     for (int i = 0; i < input->size(); i++) {
+//         double value = input->at(i);  // the final element of tthe input matrix
+//         if (value < 0) {
+//             output->push_back((double)0.001 * value);
+//         } else {
+//             output->push_back(value);
+//         }
+//     }
+// }
 
 static void sigmoid(vector<double>* input, vector<double>* output) {
     for (int i = 0; i < input->size(); i++) {
-        double value = input->at(i);  // the final element of the input matrix
         output->push_back(1 / (1 + pow(exp(1), -1 * input->at(0))));
     }
 }
 
 static void tanh(vector<double>* input, vector<double>* output) {
     for (int i = 0; i < input->size(); i++) {
-        double value = input->at(i);  // the final element of the input matrix
         output->push_back((exp(input->at(0)) - exp(-1 * input->at(0))) / (exp(input->at(0)) + exp(-1 * input->at(0))));
     }
 }
@@ -168,8 +166,6 @@ static void average(vector<double>* list, vector<double>* output) {  // Collecti
 }
 
 static void not_gate(vector<double>* list, vector<double>* output) {  // Collective node function
-    double sum = 0;
-
     output->push_back(!(list->at(0)));
 }
 
@@ -189,17 +185,17 @@ static collectFunc collectiveFunc[8] = {&add, &reLu, &multiply, &average, &subtr
 static collectFuncDerivative derivativeFunc[7] = {&derAddition,    &derReLu,    &derMultiply, &derAverage,
                                                   &derSubtraction, &derSigmoid, &derTanh};
 
-static void calculateMeandVariance(vector<double> vals, double& mean, double& variance) {
-    for (int i = 0; i < vals.size(); i++) {
-        mean = vals.at(i) + mean;
-    }
-    mean = mean / vals.size();
+// static void calculateMeanAndVariance(vector<double> vals, double& mean, double& variance) {
+//     for (int i = 0; i < vals.size(); i++) {
+//         mean = vals.at(i) + mean;
+//     }
+//     mean = mean / vals.size();
 
-    for (int i = 0; i < vals.size(); i++) {
-        variance = pow(vals.at(i) - mean, 2) + variance;
-    }
+//     for (int i = 0; i < vals.size(); i++) {
+//         variance = pow(vals.at(i) - mean, 2) + variance;
+//     }
 
-    variance = variance / vals.size();
-}
+//     variance = variance / vals.size();
+// }
 
 #endif /* Utilities_hpp */
