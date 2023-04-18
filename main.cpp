@@ -14,7 +14,6 @@ int main(int, char const**) {
     vector<double> optimal;
     for (int i = 0; i < 2; i++) {
         int k = uniformTest(0, 1, 10);
-        int mult = uniformTest(1, 10, 1);
         // int k=23;
         food.push_back(k);
         optimal.push_back(k);
@@ -79,7 +78,6 @@ int main(int, char const**) {
 
         sort(creatures.begin(), creatures.end(), compare);
 
-        int count = 0;
         if ((round + 1) % 100 == 0) {
             system("clear");
             creatures.at(0)->pr();
@@ -87,8 +85,6 @@ int main(int, char const**) {
         }
         for (int i = 0; i < 50; i++) {
             for (int k = 0; k < 2; k++) {
-                int d = uniformTest(0,24, 1);
-                int t = uniformTest(0,45, 1);
                 organism* child = new organism(asexual_reproduce(*creatures.at(i)->getGenome()), main);
                 //organism* child = new organism(reproduce(*creatures.at(t)->getGenome(), *creatures.at(d)->getGenome()), main);
                 creatures.push_back(child);

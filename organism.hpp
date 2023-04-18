@@ -37,35 +37,35 @@
 #include <chrono>
 
 const int connection_maximum = 1000;  // maximum number of connections one node can have
-const int synapses_wait_time = 10;    // the number of synapses that will be allopwed before food dissapears;
+const int synapses_wait_time = 10;    // the number of synapses that will be allowed before food disappears;
 using namespace std;
 int count_o = 0;
 
-// if the gene is -1 then it is a marker gene expressing that a certain interval has neded
+// if the gene is -1 then it is a marker gene expressing that a certain interval has needed
 struct genes {
     bool is_parameter;
     bool is_collection;
     bool is_value;
     /* These first three variables are boolean variables that check if the gene is either a parameter collection or value node*/
-    bool is_active; /*This checks if the gene is active, if it is dead it will not be expressed*/
-    bool collection_index_mutator; /*This is the mutator for the index of a collection node, the index is a
-    the type of operation it will be, for example an index of 0 is addition while 1 is the reLu activation */
-    int collection_index;// Type of collection node 
-    int expression;//if this variable is -1 then the gene will be a mutator node, mutator node are 
-    //special location within the genome that designate areas where input and output nodes will be 
-    int synapse_time;// This is the time requried for a specifc type of expressed node to fire 
-    int collective_time;// This is the time given to a collective node, to gather inputs, after which iw will fire
-    int current_time = 0;  /// current synapse time, versus max synapse time
-    int abs_time = 0;// absolute time since gene was released to the wil
-    double threshold;//useless
-    string type;//useless
-    string hash;// the hash of the gene, when the program is multithreaded, the hash will have to be radnomly generated so 
-    //the likelihood of any two genes having the same hash is small
-    Node* ptr;/* The ptr to the ndoe*/
-    double mutator_connections;//The mutator connections, 
-    vector<string> node_connections;//The string of hashes of other nodes(may include itself), that this node is connected too
-    std::unordered_map<std::string, int> node_connections_found;// A map to check if a certain node has already been connected too
-    float parameter_index;//paramter value, if the gene is a parameter 
+    
+    bool is_active;                     /*This checks if the gene is active, if it is dead it will not be expressed*/
+    bool collection_index_mutator;      /*This is the mutator for the index of a collection node, the index is a
+                                        the type of operation it will be, for example an index of 0 is addition while 1 is the reLu activation */
+    int collection_index;               // Type of collection node 
+    int expression;                     //if this variable is -1 then the gene will be a mutator node, mutator node are 
+                                        //special location within the genome that designate areas where input and output nodes will be 
+    int synapse_time;                   // This is the time required for a specific type of expressed node to fire 
+    int collective_time;                // This is the time given to a collective node, to gather inputs, after which iw will fire
+    int current_time = 0;               // current synapse time, versus max synapse time
+    int abs_time = 0;                   // absolute time since gene was released to the wil
+    string hash;                        // the hash of the gene, when the program is multithreaded, the hash will have to be randomly generated so 
+                                        //the likelihood of any two genes having the same hash is small
+    
+    Node* ptr;                          /* The ptr to the node*/
+    double mutator_connections;         //The mutator connections, 
+    vector<string> node_connections;    //The string of hashes of other nodes(may include itself), that this node is connected too
+    std::unordered_map<std::string, int> node_connections_found; // A map to check if a certain node has already been connected too
+    float parameter_index;              //parameter value, if the gene is a parameter 
     genes& operator=(const genes& right) {
         node_connections.assign(right.node_connections.begin(), right.node_connections.end());
         node_connections_found = right.node_connections_found;
@@ -78,10 +78,8 @@ struct genes {
         collection_index = right.collection_index;
 
         expression = right.expression;
-        type = right.type;
         hash = right.hash;
         expression = right.expression;
-        threshold = right.threshold;
         mutator_connections = right.mutator_connections;
         synapse_time = right.synapse_time;
         current_time = right.current_time;
@@ -144,7 +142,7 @@ static string generateHash() {
 static void randomOutput(double& val, double probability_of_change, double step_of_change, double lower_bound,
                          double higher_bound) {
     float division = 1/probability_of_change;        // this i the division for the random number
-    float random = uniformTest(0,division,1);  // our radnom number
+    float random = uniformTest(0,division,1);  // our random number
     if (random==0) {  // if the guess is within the range then the addition will be added
         int direction = uniformTest(-1, 1, 1);
         double temp_val = val;
@@ -155,10 +153,10 @@ static void randomOutput(double& val, double probability_of_change, double step_
         }
     }
 }
-// just gives you aradom gener from a choice a choice of two genes, and changes the value of a reference variable return value
+// just gives you random gene from a choice a choice of two genes, and changes the value of a reference variable return value
 static genes& randomGene(genes& first_gene, genes& second_gene, double first_mutator, double second_mutator,
-                         double& return_value, double probablility_of_change) {
-    double random = uniformTest(0, 1, 1);                 // our radnom number
+                         double& return_value, double probability_of_change) {
+    double random = uniformTest(0, 1, 1);                 // our random number
     if (random == 0) {  // if the guess is within the range then the addition will be added
         return_value = first_mutator;
         return first_gene;
@@ -531,7 +529,7 @@ class organism : public sim_objects {
                     s=s+"p";
                     parameter_node* ptr = new parameter_node(main, true, 0);
                     ptr->getInputVector()->push_back(genome->dominant_strand.at(i).parameter_index);
-                    create_nodes.push_back(ptr);  // paramter node is just created with it's value
+                    create_nodes.push_back(ptr);  // parameter node is just created with it's value
                     active_genes.push_back(&genome->dominant_strand.at(i));
                     gene_node_map[ptr] = &genome->dominant_strand.at(i);
                     genome->map[genome->dominant_strand.at(i).hash] = ptr;
@@ -588,9 +586,9 @@ class organism : public sim_objects {
         if(!found){
             score=score+0;
         }
-        for (int i = 0; i < create_nodes.size();
-             i++) {  // This connecte the nodes together, if the node is not a nullptr and if the node does not connect
-                     // to a node that is a nullptr then make the connection
+        for (int i = 0; i < create_nodes.size();i++) {
+            // This connects the nodes together, if the node is not a nullptr and if the node does not connect
+            // to a node that is a nullptr then make the connection
             Node* ptr = create_nodes.at(i);
             if (ptr != nullptr) {
                 for (int m = 0; m < genome->dominant_strand.at(i).node_connections.size(); m++) {
@@ -850,7 +848,7 @@ class organism : public sim_objects {
         return s;
     }
 
-    void close() {  // delets the dynamically appointed objects after creation
+    void close() {  // deletes the dynamically appointed objects after creation
         for (int i = 0; i < create_nodes.size(); i++) {
             delete create_nodes.at(i);
         }
@@ -902,8 +900,8 @@ class organism : public sim_objects {
 
 bool can_reproduce(organism* a, organism* b, double max_life) {
     double life_amountA = a->get_life() / max_life;
-    double life_amoundB = b->get_life() / max_life;
-    if (life_amountA >= 0.3 && life_amoundB >= 0.3 && a->get_time_since_reproduction() > 15 &&
+    double life_amountB = b->get_life() / max_life;
+    if (life_amountA >= 0.3 && life_amountB >= 0.3 && a->get_time_since_reproduction() > 15 &&
         b->get_time_since_reproduction() > 15) {
         a->set_time_since_reproduction(-16);
         b->set_time_since_reproduction(-16);

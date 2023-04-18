@@ -43,7 +43,7 @@ struct RGB {
 
 // static void seLu(vector<double>* input, vector<double>* output) {
 //     for (int i = 0; i < input->size(); i++) {
-//         double value = input->at(i);  // the final element of tthe input matrix
+//         double value = input->at(i);  // the final element of the input matrix
 //         if (value < 0) {
 //             output->push_back((double)0.001 * value);
 //         } else {
@@ -176,10 +176,10 @@ static void derAverage(double& derivative, double output, double specificOutput,
 
 typedef void (*collectFunc)(
     vector<double>*,
-    vector<double>*);  // Collective node, with a vector being accepted as a paramter and a void return statement
+    vector<double>*);  // Collective node, with a vector being accepted as a parameter and a void return statement
 typedef void (*collectFuncDerivative)(
     double& derivative, double output, double specificOutput, double number,
-    vector<double>& list);  // Collective node, with a vector being accepted as a paramter and a void return statement
+    vector<double>& list);  // Collective node, with a vector being accepted as a parameter and a void return statement
 
 static collectFunc collectiveFunc[8] = {&add, &reLu, &multiply, &average, &subtraction, &sigmoid, &tanh, &not_gate};
 static collectFuncDerivative derivativeFunc[7] = {&derAddition,    &derReLu,    &derMultiply, &derAverage,

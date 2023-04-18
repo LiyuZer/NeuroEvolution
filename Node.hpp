@@ -29,7 +29,7 @@ class Node {
 
     Node(int index, bool is_Value, Network<Node>* n, bool dynamic, int threadID) {
         thread_ID = threadID;
-        indexFuntion = index;
+        indexFunction = index;
         is_collective_node = (!is_Value);  // If it is a value then it will switch
         is_value_node = (is_Value);
         is_parameter = false;
@@ -60,10 +60,10 @@ class Node {
         input.push_back(num);
 
         if (is_value_node ==
-            true) {  // if the value node is true tehn teh activated value is the same as teh is_value node
-            // I put this here becuase teh intiali creation of an empty node will not have a input and so no activtaed
-            // value for propogation, so once it is a added to the input vector it will be passed to the activated value
-            // and so it is ready for propogation
+            true) {  // if the value node is true then the activated value is the same as teh is_value node
+            // I put this here because teh initial creation of an empty node will not have a input and so no activated
+            // value for propagation, so once it is a added to the input vector it will be passed to the activated value
+            // and so it is ready for propagation
             setActivatedValue(num);
         };
         mut.unlock();
@@ -99,8 +99,8 @@ class Node {
 
     vector<Node*>* getPrevVector() { return &previous; }
     vector<Node*>* getNextVector() { return &next; }
-    int getIndexValue() const { return indexFuntion; }
-    void setIndex(int s) { indexFuntion = s; }
+    int getIndexValue() const { return indexFunction; }
+    void setIndex(int s) { indexFunction = s; }
     vector<Node*>* getPVector() const { return &previous; }
     vector<Node*>* getNVector() const { return &next; }
     void setPreviousVector(vector<Node*>& s) { previous = s; }
@@ -118,7 +118,7 @@ class Node {
         else {
             cout << "Type: collection node" << endl;
         }
-        cout << "Index Value: " << p->indexFuntion << endl;
+        cout << "Index Value: " << p->indexFunction << endl;
         cout << "input: " << endl;
         if (p->getIVector()->size() > 0) {
             for (int i = 0; i < p->getIVector()->size(); i = i + 1) {
@@ -177,7 +177,7 @@ class Node {
     }
 
     const double getOutput(int index) { return output.at(index); }
-    int returnIndex() { return indexFuntion; }
+    int returnIndex() { return indexFunction; }
     void print(Node* head) {
         printInfo(head);
 
@@ -239,12 +239,12 @@ class Node {
     void operator>>=(Node& right) {
         this->addNext(&right);
         right.addPrev(this);
-        this->propogate();
+        this->propagate();
         if (this->is_collective_node && right.is_value_node) {
             right.getDerivative()->push_back(1);
         }
     }
-    virtual void propogate() {
+    virtual void propagate() {
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
@@ -262,7 +262,7 @@ class Node {
     bool get_is_collective_node() const { return is_collective_node; }
     bool get_is_parameter() const { return is_parameter; }
     bool get_is_value_node() const { return is_value_node; }
-    void setTrueParamter() { is_parameter = true; }
+    void setTrueParameter() { is_parameter = true; }
     void setActiveFalse() const { active = false; }
     bool getActive() { return active; }
     Network<Node>* getNetworkPointer() const { return neuralNet; }
@@ -271,7 +271,7 @@ class Node {
     void setSeen() { seen = true; }
     bool getSeen() { return seen; }
 
-    void addDerNuber() { derNumber = derNumber + 1; }
+    void addDerNumber() { derNumber = derNumber + 1; }
     int getDerNumber() { return derNumber; }
     void zeroDerNumber() { derNumber = 0; }
 
@@ -305,7 +305,7 @@ class Node {
         }
 
         else {
-            p->addDerNuber();
+            p->addDerNumber();
 
             if (p->getSeen()) {  // if it hasn't been and has not prev vector add
 
@@ -337,7 +337,7 @@ class Node {
     }
 
     int getPreviousNumber() { return previousNumber; }
-    void setprevNumber(int num) { previousNumber = num; }
+    void setPrevNumber(int num) { previousNumber = num; }
 
     void setDerivativeAtNode(double d) { derivativeAtNode = d; }
     double getDerivativeAtNode() { return derivativeAtNode; }
@@ -355,8 +355,8 @@ class Node {
    private:
     mutable vector<double> input;  // input of the node
     double activated_value;
-    mutable vector<double> output;  // ouputed function
-    int indexFuntion;               // Index function for array of functions in utility
+    mutable vector<double> output;  // outputted function
+    int indexFunction;               // Index function for array of functions in utility
     mutable vector<Node*> previous;
     mutable vector<Node*> next;
     bool is_value_node;
@@ -457,7 +457,7 @@ class collection_node : public Node {
     void activate() override {
         collectiveFunc[getIndexValue()](getInputVector(), getOutputVector());
         setActivatedValue(getOutput(0));
-        propogate();
+        propagate();
         for (int i = 0; i < getPrevVector()->size(); i++) {
             double temp;
             derivativeFunc[getIndexValue()](temp, getOutput(0), getPrevVector()->at(i)->getOutput(0),
@@ -470,7 +470,7 @@ class collection_node : public Node {
             1);  // Once there is an activation the input doesn't matter, take this out for regular use
     }
 
-    void special_propogate() {
+    void special_propagate() override {
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
@@ -490,7 +490,7 @@ class collection_node : public Node {
         collectiveFunc[getIndexValue()](getInputVector(), getOutputVector());
         setActivatedValue(getOutput(0));
         int temp = getInputVector()->size();
-        special_propogate();
+        special_propagate();
         getInputVector()->erase(getInputVector()->begin(), getInputVector()->begin() + temp);
         getInputVector()->push_back(1);
         getOutputVector()->clear();
@@ -665,7 +665,7 @@ class value_node : public Node {
 
     void activate() {
         setActivatedValue(getInput(0));
-        propogate();
+        propagate();
         getInputVector()->clear();
         getInputVector()->push_back(0);
     }
@@ -673,11 +673,11 @@ class value_node : public Node {
     void special_activation() {
         setActivatedValue(getInput(0));
         double temp = getInputVector()->at(0);
-        special_propogate();
+        special_propagate();
         getInputVector()->at(0) = getInputVector()->at(0) - temp;
     }
     void specialActivation() { setActivatedValue(getInput(0)); }
-    void special_propogate() {
+    void special_propagate() {
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
@@ -718,12 +718,12 @@ class parameter_node : public value_node {
             increment = &previousDerivatives[threadCount + 1];
         }
         setActivatedValue(*param);
-        setTrueParamter();
+        setTrueParameter();
         addInput(*param, prev);
     }
     parameter_node(Network<Node>* n, bool dynamic, shared_ptr<double[]> pre, int threadID)
         : value_node(true, n, dynamic, threadID) {
-        setTrueParamter();
+        setTrueParameter();
         if (pre != nullptr) {
             previousDerivatives = pre;
             pre.reset();
@@ -745,13 +745,13 @@ class parameter_node : public value_node {
     }
 
     parameter_node(Network<Node>* n, bool dynamic, int threadID) : value_node(true, n, dynamic, threadID) {
-        setTrueParamter();
+        setTrueParameter();
         previousDerivatives = nullptr;
     }
 
     parameter_node(double value, Network<Node>* n, bool dynamic, int threadID)
         : value_node(true, n, dynamic, threadID) {
-        setTrueParamter();
+        setTrueParameter();
         previousDerivatives = nullptr;
         addI(value);
     }
@@ -759,7 +759,7 @@ class parameter_node : public value_node {
     parameter_node(const parameter_node& right)
         : value_node(right.getNetworkPointer(), right.isDynamic(), right.getThreadID()) {
         right.setActiveFalse();
-        setTrueParamter();
+        setTrueParameter();
         this->setInputVector(*right.getIVector());
         this->setOutputVector(*right.getOVector());
         this->setNextVector(*right.getNVector());
@@ -800,7 +800,7 @@ class parameter_node : public value_node {
     // }
 
     parameter_node& operator=(parameter_node& right) {
-        setTrueParamter();
+        setTrueParameter();
         right.setActiveFalse();
         this->setInputVector(*right.getIVector());
         this->setOutputVector(*right.getOVector());
@@ -841,17 +841,17 @@ class parameter_node : public value_node {
     }
     void activate() override {
         setActivatedValue(*param);
-        propogate();
+        propagate();
     }
 
     void special_activation() override {
         setActivatedValue(getInputVector()->at(0));
-        special_propogate();
+        special_propagate();
     }
 
     virtual double getInput(int index) override { return *param; }
 
-    void special_propogate() {
+    void special_propagate() override {
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
@@ -868,14 +868,14 @@ class parameter_node : public value_node {
         }
     }
 
-    void propogate() override {
+    void propagate() override {
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
             if (nextVector->at(i) != nullptr) {
-                // This is here becuase during activation for collective node the value is already updated(output
+                // This is here because during activation for collective node the value is already updated(output
                 // value), thus it only takes place if this node is a value node
                 this->addOutput(*param);  // Whenever a computation is made an output is added to the vector, note
-                // that the output vector is very important for final calculations as it corresposnds to the derivative
+                // that the output vector is very important for final calculations as it corresponds to the derivative
                 // vector
                 nextVector->at(i)->addI(*param);
             }
