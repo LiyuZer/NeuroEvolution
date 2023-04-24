@@ -12,7 +12,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+#include <cstdlib>
 #include "Node.hpp"
 #include "Utilities.hpp"
 #include "dna.hpp"
@@ -68,15 +68,30 @@ class organism : public sim_objects {
         score = 0;
         main = m;
     }
+
+    void explore_gene(genes& x1){
+
+        if(x1.node_connections.size()>0){
+            string s=x1.node_connections.at(x1.node_connections.size()-1);
+        for(int i=0; i<x1.past_forms.size(); i++){
+            if(s==x1.past_forms.at(i)){
+                return;
+            }
+        }
+        x1.past_forms.push_back(s);
+        score=score+50;
+    }
+
+    }
     void express_dna() {
         string s;
+        int marker=0;
         for (int i = 0; i < genome->dominant_strand.size(); i++) {
             if (genome->dominant_strand.at(i).expression != -1 &&
                 genome->dominant_strand.at(i)
                     .is_active) {  // If the gene is a marked gene add 1 if not then express the gene
                     genome->dominant_strand.at(i).abs_time++;
-                    score=score-1;
-    
+                    explore_gene(genome->dominant_strand.at(i));
                 if (genome->dominant_strand.at(i).is_parameter) {
                     s=s+"p";
                     parameter_node* ptr = new parameter_node(main, true, 0);
@@ -113,6 +128,7 @@ class organism : public sim_objects {
                 s=s+"m";
                 genome->map[genome->dominant_strand.at(i).hash] = nullptr;
                 if (genome->dominant_strand.at(i).expression == -1) {
+                    marker++;
                     active_genes.push_back(&genome->dominant_strand.at(i));
                 }
             }
@@ -136,7 +152,7 @@ class organism : public sim_objects {
         }
 
         if(!found){
-            score=score+0;
+            score=score+1;
         }
         for (int i = 0; i < create_nodes.size();i++) {
             // This connects the nodes together, if the node is not a nullptr and if the node does not connect
@@ -167,7 +183,7 @@ class organism : public sim_objects {
 
         if (active_genes.size() > 1) {
             der_number = active_genes.at(0)->current_time;
-            max = active_genes.at(0)->current_time + 10;
+            max = active_genes.at(0)->current_time + 20;
         }
 
         vector<genes*> input;
@@ -186,11 +202,12 @@ class organism : public sim_objects {
         for (int i = 0; i < active_genes.size(); i++) {
             if (active_genes.at(i)->expression != -1 && count < 1) {
                 if (active_genes.at(i)->is_value) {
+
                     if (!found_input && active_genes.at(i)->is_active) {
                             if (count_input==2)
                             {
                                 found_input = true;
- 
+
                             }
                             else{
                                 count_input++;
@@ -206,6 +223,7 @@ class organism : public sim_objects {
                     input.push_back(active_genes.at(i));
                 }
             } else if (count <= 1 && active_genes.at(i)->expression != -1) {
+
                 if (!found_hidden && active_genes.at(i)->is_active) {
                     found_hidden = true;
                 }
@@ -235,11 +253,7 @@ class organism : public sim_objects {
             if (i < optimal.size()) {
                 if (input.size() > 0) {
                     double sub = output.at(i)->ptr->getInputVector()->at(0) - optimal.at(i);
-                   double num = exp(-1 * pow(sub, 2) / (2 * pow(0.1, 2)));
-                //    int num=0;
-                //    if(sub==0){
-                //     num=1;
-                //    }
+                   double num = exp(-1 * pow(sub, 2) / (2 * pow(1, 2)));
                     score = num + score;
                     output_num.push_back(output.at(i)->ptr->getInputVector()->at(0));
                     out.push_back(output.at(i)->ptr->getInputVector()->at(0));
@@ -287,20 +301,17 @@ class organism : public sim_objects {
             int size = ptr_1->ptr->getNextVector()->size();
             genes* gene_ptr = ptr_1;
             if (gene_ptr->current_time <= num) {
-                if (gene_ptr->current_time != 0 &&
-                    (gene_ptr->current_time % gene_ptr->synapse_time == 0 ||
-                     (gene_ptr->is_collection &&
-                      gene_ptr->collective_time <= gene_ptr->ptr->getInputVector()->size()))) {
+                //gene_ptr->current_time != 0 &&
+                    // (gene_ptr->current_time % gene_ptr->synapse_time == 0 ||
+                    //  (gene_ptr->is_collection &&
+                    //   gene_ptr->collective_time <= gene_ptr->ptr->getInputVector()->size()))
+                if (output_now(tanhyper(gene_ptr->ptr->getInputVector()->at(0)*gene_ptr->synapse_time)) ) {
                     if (ptr->getNextVector()->size() > 0) {
                         ptr->special_activation();
                     }
                     gene_ptr->current_time++;
-                } else if (gene_ptr->current_time == 0) {
-                    if (ptr->getNextVector()->size() > 0) {
-                        ptr->special_activation();
-                    }
-                    gene_ptr->current_time++;
-                } else {
+                }
+                else {
                     gene_ptr->current_time++;
                 }
                 for (int m = 0; m < size; m++) {
@@ -337,6 +348,7 @@ class organism : public sim_objects {
             cout << "\033[33m\033The hash of this node is: " << genome->dominant_strand.at(i).hash << endl;
             cout << "The synapse wait time is " << genome->dominant_strand.at(i).synapse_time << endl;
             cout << "The absolute time of this node is: " << genome->dominant_strand.at(i).abs_time << endl;
+            cout << "The level: " << genome->dominant_strand.at(i).level << endl;
             if(past_forms.size()>0){
             cout << "The nearest past_form: " << past_forms.at(0)<< endl;
             }
@@ -477,7 +489,7 @@ class food : public sim_objects {
     food(int num) : sim_objects(false) {
         int count = 0;
         for (int i = 0; i < num; i++) {
-            int val = uniformTest(0, 1, 1);
+            int val = uniformTest(0, 1);
             food_values.push_back(val);
             if (val != 0) {
                 count++;
@@ -491,5 +503,86 @@ class food : public sim_objects {
     vector<double> food_values;
     vector<double> output_wanted;
 };
+
+
+
+static void run_world(int population_sizes[],int num_pop, int max_round, int no_inputs, int no_output, float percentage_size ){
+    vector<organism*> creatures;
+    Network<Node>* main = new Network<Node>(1);
+
+    vector<double> food;
+    vector<double> optimal;
+
+    int array[10];
+
+    for(int i=0; i<10; i++){
+        array[i]=55;
+    }
+    array[2]=99;
+        array[7]=99;
+
+
+    for (int i = 0; i < population_sizes[0]; i++) {
+        organism* ptr = new organism(100, main, array, 10);
+        creatures.push_back(ptr);
+        mutate_dna(*creatures.at(i)->getGenome());
+    }
+
+    int div=(float)max_round/num_pop;
+    for(int round = 0; round < num_pop; round++) {
+        for(int sub_rounds=0; sub_rounds<div; sub_rounds++){
+                for (int k = 0; k < 20; k++) {
+                    food.clear();
+                    optimal.clear();
+                    for (int i = 0; i < 1; i++) {
+                            float ks = uniformTestRange(0, 1,1000);
+                            float mult =uniformTestRange(0, 1,1000);
+                            float max = 0;
+                            float less = 0;
+                            if (mult < ks) {
+                                max = 1;
+                                less = 0;
+                            } else {
+                                max = 0;
+                                less = 1;
+                            }
+                            food.push_back(ks);
+                            food.push_back(mult);
+                            optimal.push_back(ks); 
+                            optimal.push_back(mult); 
+                        }
+                        for (int i = 0; i < population_sizes[round]; i++) {
+                        organism* ptr = creatures.at(i);
+                        if (k == 0) {
+                            ptr->express_dna();
+                        }
+                            ptr->synapse( food, optimal);
+                    }
+                }
+
+                    sort(creatures.begin(), creatures.end(), compare);
+                    if ((sub_rounds + 1) % 2 == 0) {
+                        system("clear");
+                        creatures.at(0)->pr();
+                        creatures.at(0)->print();
+                    }
+
+                        for (int i = 0; i < population_sizes[round]; i++) {
+                                int choosen_one=uniformTest(0,population_sizes[round]*percentage_size);
+                                int choosen_two=uniformTest(0,population_sizes[round]*percentage_size);
+
+                               // organism* child = new organism(asexual_reproduce(*creatures.at(choosen_one)->getGenome()), main);
+                               organism* child = new organism(reproduce(*creatures.at(choosen_one)->getGenome(), *creatures.at(choosen_two)->getGenome()), main);
+                                creatures.push_back(child);
+                        }
+                            for (int i = 0; i < population_sizes[round]; i++) {
+                                delete creatures.at(0);
+                                creatures.erase(creatures.begin());
+                            }
+                }
+                main->clear(0);
+        } 
+    }
+
 
 #endif /* Organisms_hpp */

@@ -17,9 +17,18 @@ using namespace std;
 static std::random_device rd;      // obtain a random number from hardware
 static std::mt19937 gen(rd());     // seed the generator
 
-static int uniformTest(double x, double y, int scale_factor) {
-    std::uniform_int_distribution<> distr(x * scale_factor, y * scale_factor);  
-    return distr(gen) / scale_factor;
+static double uniformTest(double x, double y) {
+
+    std::uniform_int_distribution<> distr(x, y);  
+    return (double)distr(gen);
+}
+
+
+static double uniformTestRange(double x, double y, int division) {
+    float dif=y-x;
+    float multiple=dif/division;
+    std::uniform_int_distribution<> distr(0, division);  
+    return (double)distr(gen)*multiple+x;
 }
 
 const int imageWidth = 500;
@@ -185,6 +194,10 @@ static collectFunc collectiveFunc[8] = {&add, &reLu, &multiply, &average, &subtr
 static collectFuncDerivative derivativeFunc[7] = {&derAddition,    &derReLu,    &derMultiply, &derAverage,
                                                   &derSubtraction, &derSigmoid, &derTanh};
 
+
+static float tanhyper(float x){
+    return (exp(x)-exp(-1*x))/(exp(x)+exp(-1*x));
+}
 // static void calculateMeanAndVariance(vector<double> vals, double& mean, double& variance) {
 //     for (int i = 0; i < vals.size(); i++) {
 //         mean = vals.at(i) + mean;

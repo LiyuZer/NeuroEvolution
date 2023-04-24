@@ -671,7 +671,7 @@ class value_node : public Node {
     }
 
     void special_activation() {
-        setActivatedValue(getInput(0));
+        getInputVector()->at(0)=tanhyper(getInputVector()->at(0));
         double temp = getInputVector()->at(0);
         special_propagate();
         getInputVector()->at(0) = getInputVector()->at(0) - temp;
@@ -768,7 +768,6 @@ class parameter_node : public value_node {
         this->setDerivativeVector(*right.getDerivative());
         this->setPrevDerivative(right.getPrevDerivative());
         this->setThreadID(right.getThreadID());
-
         for (int i = 0; i < right.getPVector()->size(); i++) {
             if (right.getPVector()->at(i) != nullptr) {
                 for (int m = 0; m < right.getPVector()->at(i)->getNextVector()->size(); m = m + 1) {

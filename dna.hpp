@@ -11,6 +11,8 @@ using namespace std;
 
 int count_o = 0;
 
+
+
 // if the gene is -1 then it is a marker gene expressing that a certain interval has needed
 struct genes {
     bool is_parameter;
@@ -30,7 +32,8 @@ struct genes {
     int abs_time = 0;                   // absolute time since gene was released to the wil
     string hash;                        // the hash of the gene, when the program is multithreaded, the hash will have to be randomly generated so 
                                         //the likelihood of any two genes having the same hash is small
-    
+    int level;
+    vector<string> past_forms;
     Node* ptr;                          /* The ptr to the node*/
     double mutator_connections;         //The mutator connections, 
     vector<string> node_connections;    //The string of hashes of other nodes(may include itself), that this node is connected too
@@ -38,6 +41,7 @@ struct genes {
     float parameter_index;              //parameter value, if the gene is a parameter 
     genes& operator=(const genes& right) {
         node_connections.assign(right.node_connections.begin(), right.node_connections.end());
+        past_forms.assign(right.past_forms.begin(), right.past_forms.end());
         node_connections_found = right.node_connections_found;
         ptr = nullptr;
         is_parameter = right.is_parameter;
@@ -46,7 +50,7 @@ struct genes {
         is_active = right.is_active;
         collection_index_mutator = right.collection_index_mutator;
         collection_index = right.collection_index;
-
+        level=right.level;
         expression = right.expression;
         hash = right.hash;
         expression = right.expression;
@@ -112,9 +116,9 @@ string generateHash() {
 void randomOutput(double& val, double probability_of_change, double step_of_change, double lower_bound,
                          double higher_bound) {
     float division = 1/probability_of_change;        // this i the division for the random number
-    float random = uniformTest(0,division,1);  // our random number
+    float random = uniformTest(0,division);  // our random number
     if (random==0) {  // if the guess is within the range then the addition will be added
-        int direction = uniformTest(-1, 1, 1);
+        int direction = uniformTest(-1, 1);
         double temp_val = val;
         temp_val = temp_val + direction * step_of_change;
         if (temp_val < lower_bound || temp_val > higher_bound) {
@@ -126,7 +130,7 @@ void randomOutput(double& val, double probability_of_change, double step_of_chan
 // just gives you random gene from a choice a choice of two genes, and changes the value of a reference variable return value
 genes& randomGene(genes& first_gene, genes& second_gene, double first_mutator, double second_mutator,
                          double& return_value, double probability_of_change) {
-    double random = uniformTest(0, 1, 1);                 // our random number
+    double random = uniformTest(0, 1);                 // our random number
     if (random == 0) {  // if the guess is within the range then the addition will be added
         return_value = first_mutator;
         return first_gene;
@@ -136,55 +140,57 @@ genes& randomGene(genes& first_gene, genes& second_gene, double first_mutator, d
     }
 }
 
-void mutate_connection(double mutator, vector<genes>& strand_of_genes, genes& x1) {
+void mutate_connection(double mutator, dna& genome, genes& x1) {
     double value = 0;
-    value = uniformTest(0, 10, 1);
-    if (value < 5) {
-        int erase = uniformTest(0, 10, 1);
-        if (erase > 9 && x1.node_connections.size() > 0) {
-            double index = uniformTest(0, x1.node_connections.size() - 1, 1);
+    value = uniformTest(0, 10);
+        float erase = uniformTestRange(0, 1,1000);
+        if (erase > 0.3 && x1.node_connections.size() > 0) {
+            double index = uniformTest(0, x1.node_connections.size() - 1);
+
             x1.node_connections_found.erase(x1.node_connections.at(index));
             x1.node_connections.erase(x1.node_connections.begin() + index);
-        } else if (strand_of_genes.size() > 0) {
-            double index = uniformTest(0, strand_of_genes.size() - 1, 1);
-            auto it = x1.node_connections_found.find(strand_of_genes.at(index).hash);
-            if (it == x1.node_connections_found.end() && strand_of_genes.at(index).expression != -1) {
-                x1.node_connections.push_back(strand_of_genes.at(index).hash);
-                x1.node_connections_found[strand_of_genes.at(index).hash] = 1;
+        } else if (genome.dominant_strand.size() > 0) {
+            double index = uniformTest(0, genome.dominant_strand.size() - 1);
+            auto it = x1.node_connections_found.find(genome.dominant_strand.at(index).hash);
+            if (it == x1.node_connections_found.end() && genome.dominant_strand.at(index).expression != -1&&
+            genome.dominant_strand.at(index).level<=x1.level+1&& x1.level-1<=genome.dominant_strand.at(index).level) {
+                x1.node_connections.push_back(genome.dominant_strand.at(index).hash);
+                x1.node_connections_found[genome.dominant_strand.at(index).hash] = 1;
             }
+
         }
-    }
 }
 
 genes* make_random_gene(dna& genome) {
     genes* new_gene = new genes;
-    double param = uniformTest(0, 100, 1);
-    if (param < 10) {
-        new_gene->is_parameter = true;
-        new_gene->is_value = false;
-        new_gene->is_collection = false;
-        new_gene->expression = 0;
-        new_gene->parameter_index = uniformTest(-1, 1, 1000);
-        new_gene->synapse_time = uniformTest(1, 9, 1);
+    double param = uniformTest(0,100);
+    // if (param < 10) {
+    //     new_gene->is_parameter = true;
+    //     new_gene->is_value = false;
+    //     new_gene->is_collection = false;
+    //     new_gene->expression = 0;
+    //     new_gene->parameter_index = uniformTestRange(-1, 1, 1000);
+    //     new_gene->synapse_time = uniformTest(1, 9);
 
-    } else if (param < 70) {
+    // } 
+     if (param < 70) {
         new_gene->is_parameter = false;
         new_gene->is_value = true;
         new_gene->is_collection = false;
         new_gene->expression = 1;
-        new_gene->synapse_time = uniformTest(1, 9, 1);
+        new_gene->synapse_time = uniformTestRange(0,9,1000);
 
-    } else if (param < 90) {
-        new_gene->is_parameter = false;
-        new_gene->is_value = false;
-        new_gene->is_collection = true;
-        new_gene->expression = 2;
-        new_gene->synapse_time = uniformTest(1, 9, 1);
-        new_gene->collection_index = uniformTest(0, 6, 1);
-        new_gene->collection_index_mutator = uniformTest(0, 0.1, 1000);
-        new_gene->collective_time = 2;
+    // } else if (param < 90) {
+    //     new_gene->is_parameter = false;
+    //     new_gene->is_value = false;
+    //     new_gene->is_collection = true;
+    //     new_gene->expression = 2;
+    //     new_gene->synapse_time = uniformTest(1, 9);
+    //     new_gene->collection_index = uniformTest(0, 6);
+    //     new_gene->collection_index_mutator = uniformTestRange(0, 0.1, 1000);
+    //     new_gene->collective_time = 2;
 
-    } else {
+    // } else {
         new_gene->expression = -1;
     }
     new_gene->is_active = true;
@@ -193,8 +199,8 @@ genes* make_random_gene(dna& genome) {
     new_gene->current_time = 0;
 
     if (param != -1) {
-        new_gene->mutator_connections = uniformTest(0, 0.1, 1000);
-        mutate_connection(new_gene->mutator_connections, genome.dominant_strand, *new_gene);
+        new_gene->mutator_connections = uniformTestRange(0, 0.0001, 1000);
+       // mutate_connection(new_gene->mutator_connections, genome, *new_gene);
     }
 
     return new_gene;
@@ -207,14 +213,14 @@ genes* instruction_gene(dna& genome, int param) {
         new_gene->is_value = false;
         new_gene->is_collection = false;
         new_gene->expression = 0;
-        new_gene->synapse_time = uniformTest(1, 3, 1);
+        new_gene->synapse_time = uniformTest(1, 9);
 
     } else if (param < 70) {
         new_gene->is_parameter = false;
         new_gene->is_value = true;
         new_gene->is_collection = false;
         new_gene->expression = 1;
-        new_gene->synapse_time = uniformTest(1, 3, 1);
+        new_gene->synapse_time = uniformTest(1, 9);
 
     } else if (param < 95) {
         new_gene->is_parameter = false;
@@ -222,11 +228,11 @@ genes* instruction_gene(dna& genome, int param) {
         new_gene->is_collection = true;
         new_gene->expression = 2;
 
-        new_gene->collection_index = uniformTest(0, 7, 1);
+        new_gene->collection_index = uniformTest(0, 7);
 
-        new_gene->collection_index_mutator = uniformTest(0, 0.1, 1000);
+        new_gene->collection_index_mutator = uniformTestRange(0, 0.1, 1000);
 
-        new_gene->synapse_time = uniformTest(1, 10, 1);
+        new_gene->synapse_time = uniformTest(1, 10);
 
     } else {
         new_gene->expression = -1;
@@ -236,12 +242,6 @@ genes* instruction_gene(dna& genome, int param) {
     new_gene->ptr = nullptr;
     new_gene->current_time = 0;
 
-    if (param != -1) {
-        new_gene->mutator_connections = uniformTest(0, 0.3, 1000);
-        for (int i = 0; i < 10; i++) {
-            mutate_connection(new_gene->mutator_connections, genome.dominant_strand, *new_gene);
-        }
-    }
 
     return new_gene;
 }
@@ -249,56 +249,60 @@ genes* instruction_gene(dna& genome, int param) {
 void mutate_dna(dna& genome) {
     double val = 0;
     randomOutput(val, genome.mutator_add, 1, 0, 1);
-
     if (val) {
-        int index = uniformTest(0, genome.dominant_strand.size() - 1, 1);
+        int index = uniformTest(0, genome.dominant_strand.size() - 1);
+        genes* ptr=make_random_gene(genome);
         if (index == -1) {
             index = 0;
         }
 
-        genome.dominant_strand.insert(genome.dominant_strand.begin() + index, *make_random_gene(genome));
+        if((index-1)>0){
+            ptr->level=genome.dominant_strand.at(index-1).level;
+        }
+        else{
+        ptr->level=0;
+        }
+        genome.dominant_strand.insert(genome.dominant_strand.begin() + index, *ptr);
 
         genome.dominant_strand_mutators.insert(genome.dominant_strand_mutators.begin() + index,
-                                               uniformTest(0, 0.1, 1000));
+                                               uniformTestRange(0, 0.0001, 1000));
     }
 
-    int size = genome.dominant_strand_mutators.size();
-    for (int i = 0; i < size; i++) {
-        double val = 0;
-        randomOutput(val, genome.dominant_strand_mutators.at(i), 1, 0, 1);
-        if (val && genome.dominant_strand.at(i).is_active == true) {
-            genome.dominant_strand.at(i).is_active = false;  // deactivate gene if it is turned on
-        } else {
-            genome.dominant_strand.at(i).is_active = true;  // activate gene if it is turned off
-        }
-    }
+    // int size = genome.dominant_strand_mutators.size();
+    // for (int i = 0; i < size; i++) {
+    //     double val = 0;
+    //     randomOutput(val, genome.dominant_strand_mutators.at(i), 1, 0, 1);
+    //     if (val && genome.dominant_strand.at(i).is_active == true) {
+    //         genome.dominant_strand.at(i).is_active = false;  // deactivate gene if it is turned on
+    //     } else {
+    //         genome.dominant_strand.at(i).is_active = true;  // activate gene if it is turned off
+    //     }
+    // }
 
     val = 0;
     randomOutput(val, genome.mutator_delete, 1, 0, 1);
 
     if (val) {
-        int index = uniformTest(0, genome.dominant_strand.size() - 1, 1);
+        int index = uniformTest(0, genome.dominant_strand.size() - 1);
         if (index <= 0) {
             index = 0;
         } else {
-                //if(genome.dominant_strand.at(index).abs_time<10000){// if the gene is not old then you can't erase it
             genome.dominant_strand.erase(genome.dominant_strand.begin() + index);
             genome.dominant_strand_mutators.erase(genome.dominant_strand_mutators.begin() + index);
-                       //}
         }
     }
 
     for (int i = 0; i < genome.dominant_strand.size(); i++) {
-        if (uniformTest(0, 100, 1) < 5) {
-            mutate_connection(genome.dominant_strand.at(i).mutator_connections, genome.dominant_strand,
+        if (1 ) {
+            mutate_connection(genome.dominant_strand.at(i).mutator_connections, genome,
                               genome.dominant_strand.at(i));
         }
-        if (genome.dominant_strand.at(i).is_parameter && uniformTest(0, 100, 1) == 5) {
+        if (genome.dominant_strand.at(i).is_parameter && uniformTest(0, 100) == 5) {
             genome.dominant_strand.at(i).parameter_index =
-                genome.dominant_strand.at(i).parameter_index + uniformTest(-0.001, 0.001, 1000);
+                genome.dominant_strand.at(i).parameter_index + uniformTestRange(-0.001, 0.001, 1000);
         }
-        if (genome.dominant_strand.at(i).is_collection && uniformTest(0, 100, 1) == 5) {
-            genome.dominant_strand.at(i).collection_index = uniformTest(0, 7, 1);
+        if (genome.dominant_strand.at(i).is_collection && uniformTest(0, 100) == 5) {
+            genome.dominant_strand.at(i).collection_index = uniformTest(0, 7);
         }
     }
     if (genome.dominant_strand.size() == 0) {
@@ -306,15 +310,17 @@ void mutate_dna(dna& genome) {
         ;
     }
 }
-dna* make_random_dna() {
+dna* make_random_dna() {//you need to fix this
     dna* new_dna = new dna;
     int number_of_nodes = 3;
     for (int i = 0; i < number_of_nodes; i++) {
-        new_dna->dominant_strand.push_back(*make_random_gene(*new_dna));
-        new_dna->dominant_strand_mutators.push_back(uniformTest(0, 0.01, 1000));
+        genes* ptr=make_random_gene(*new_dna);
+
+        new_dna->dominant_strand.push_back(*ptr);
+        new_dna->dominant_strand_mutators.push_back(uniformTestRange(0, 0.01, 1000));
     }
-    new_dna->mutator_add = (double)uniformTest(0, 0.01, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0.01, 1000);
+    new_dna->mutator_add = (double)uniformTestRange(0, 0.1, 1000);
+    new_dna->mutator_delete = (double)uniformTestRange(0, 0.1, 1000);
     new_dna->is_dead = false;
     return new_dna;
 }
@@ -322,20 +328,28 @@ dna* make_random_dna() {
 dna* instruction_dna(int number_of_nodes, int array[], int size) {
     dna* new_dna = new dna;
 
+    int count_marker=0;
     for (int i = 0; i < number_of_nodes; i++) {
-        new_dna->dominant_strand.push_back(*instruction_gene(*new_dna, array[i]));
-        new_dna->dominant_strand_mutators.push_back(uniformTest(0, 0.01, 1000));
+        genes* ptr =instruction_gene(*new_dna, array[i]);
+        if(ptr->expression==-1){
+            count_marker++;
+        }
+        ptr->level=count_marker;
+        new_dna->dominant_strand.push_back(*ptr);
+        new_dna->dominant_strand_mutators.push_back(uniformTestRange(0, 0.001, 1000));
     }
-    new_dna->mutator_add = (double)uniformTest(0, 0.01, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0.01, 1000);
+    new_dna->mutator_add = (double)uniformTestRange(0, 0.01, 100);
+    new_dna->mutator_delete = (double)uniformTestRange(0, 0.001, 100);
     new_dna->is_dead = false;
     return new_dna;
 }
 
 dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = (double)uniformTest(0, 0.1, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0.1, 1000);
+    new_dna->mutator_add = 0.01;
+    new_dna->mutator_delete = 0.0001;
+    
+    
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     if (mater.dominant_strand.size() > matee.dominant_strand.size()) {
@@ -350,11 +364,6 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
                 map[ptr->hash] = 1;
                 ptr->current_time = 0;
                 new_dna->dominant_strand.push_back(*ptr);
-                // if(ptr->abs_time>1000){
-                //     if(return_mutator>0){
-                //         return_mutator=return_mutator-0.0001;
-                //             }
-                //     }
                 new_dna->dominant_strand_mutators.push_back(return_mutator);
             }
         }
@@ -367,11 +376,6 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
                 mater.dominant_strand.at(i).current_time = 0;
                 new_dna->dominant_strand.push_back(mater.dominant_strand.at(i));
                 double return_mutator=mater.dominant_strand_mutators.at(i);
-                if(mater.dominant_strand.at(i).abs_time>1000){
-                    if(return_mutator>0){
-                        return_mutator=return_mutator-0.0001;
-                            }
-                    }
                 new_dna->dominant_strand_mutators.push_back(return_mutator);
             }
         }
@@ -405,11 +409,6 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
                 map[matee.dominant_strand.at(i).hash] = 1;
                 matee.dominant_strand.at(i).current_time = 0;
                 double return_mutator=matee.dominant_strand_mutators.at(i);
-                if(matee.dominant_strand.at(i).abs_time>1000){
-                    if(return_mutator>0){
-                        return_mutator=return_mutator-0.0001;
-                            }
-                    }
                 new_dna->dominant_strand.push_back(matee.dominant_strand.at(i));
                 new_dna->dominant_strand_mutators.push_back(return_mutator);
             }
@@ -420,10 +419,29 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
     return new_dna;
 }
 
+bool output_now(float probability){
+    if(uniformTestRange(0,1,1000)<=probability){
+        return true;
+    }
+    return false;
+}
 dna* asexual_reproduce(dna& mater) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = (double)uniformTest(0, 0, 1000);
-    new_dna->mutator_delete = (double)uniformTest(0, 0, 1000);
+    float div=uniformTestRange(-0.0001,0.0001,10);
+    if(0<new_dna->mutator_add+div){
+    new_dna->mutator_add = mater.mutator_add+div;
+    }
+    else{
+    new_dna->mutator_add = mater.mutator_add;
+    }
+
+    float div1=uniformTestRange(-0.0001,0.0001,10);
+    if(0<new_dna->mutator_delete+div1){
+    new_dna->mutator_delete = mater.mutator_delete+div1;
+    }
+    else{
+    new_dna->mutator_delete = mater.mutator_delete;
+    }
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     int m = mater.dominant_strand.size();
@@ -431,11 +449,6 @@ dna* asexual_reproduce(dna& mater) {  // come back to this tomorrow morning
         double return_mutator = mater.dominant_strand_mutators.at(i);
         genes* ptr = &mater.dominant_strand.at(i);
         ptr->current_time = 0;
-        // if(ptr->abs_time>1000){
-        //     if(return_mutator>0){
-        //         return_mutator=return_mutator-0.0001;
-        //             }
-        //     }
         new_dna->dominant_strand.push_back(*ptr);
         new_dna->dominant_strand_mutators.push_back(return_mutator);
     }
