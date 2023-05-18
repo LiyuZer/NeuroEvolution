@@ -106,7 +106,7 @@ class Node {
     void setPreviousVector(vector<Node*>& s) { previous = s; }
     void setNextVector(vector<Node*>& s) { next = s; }
     void setDerivativeVector(vector<double> s) { derivative = s; }
-    virtual void special_activation() {}
+    virtual void special_activation(vector<double>& weight, double bias) {}
 
     void printInfo(Node* p) const {
         if (p->is_parameter == true) {
@@ -486,14 +486,14 @@ class collection_node : public Node {
             }
         }
     }
-    void special_activation() override {
-        collectiveFunc[getIndexValue()](getInputVector(), getOutputVector());
-        setActivatedValue(getOutput(0));
-        int temp = getInputVector()->size();
-        special_propagate();
-        getInputVector()->erase(getInputVector()->begin(), getInputVector()->begin() + temp);
-        getInputVector()->push_back(1);
-        getOutputVector()->clear();
+    void special_activation(vector<double>& weight , double bias) {
+        // collectiveFunc[getIndexValue()](getInputVector(), getOutputVector());
+        // setActivatedValue(getOutput(0));
+        // int temp = getInputVector()->size();
+        // special_propagate();
+        // getInputVector()->erase(getInputVector()->begin(), getInputVector()->begin() + temp);
+        // getInputVector()->push_back(1);
+        // getOutputVector()->clear();
     }
 
     void specialActivation() override {};
@@ -670,26 +670,28 @@ class value_node : public Node {
         getInputVector()->push_back(0);
     }
 
-    void special_activation() {
-        getInputVector()->at(0)=tanhyper(getInputVector()->at(0));
+    void special_activation(vector<double>& weight, double bias) {
+        for(int i=0; i<weight.size(); i++){
+        getOutputVector()->push_back(rellu(getInputVector()->at(0)*weight.at(i)+bias));
+        }
         double temp = getInputVector()->at(0);
         special_propagate();
         getInputVector()->at(0) = getInputVector()->at(0) - temp;
+        getOutputVector()->clear();
     }
     void specialActivation() { setActivatedValue(getInput(0)); }
     void special_propagate() {
+        
         vector<Node*>* nextVector = this->getNextVector();
         for (int i = 0; i < nextVector->size(); i = i + 1) {
-            if (nextVector->at(i) != nullptr) {
-                this->addOutput(this->getInputVector()->at(0));  // Whenever a computation is made
-            }
+
 
             if (nextVector->at(i)->get_is_collective_node()) {
-                nextVector->at(i)->addI(getInputVector()->at(0));
+                nextVector->at(i)->addI(getInputVector()->at(i));
             } else if (nextVector->at(i)->get_is_parameter()) {
             } else {
                 nextVector->at(i)->getInputVector()->at(0) =
-                    nextVector->at(i)->getInputVector()->at(0) + getInputVector()->at(0);
+                    nextVector->at(i)->getInputVector()->at(0) + getOutputVector()->at(i);
             }
         }
     }
@@ -843,9 +845,9 @@ class parameter_node : public value_node {
         propagate();
     }
 
-    void special_activation() override {
-        setActivatedValue(getInputVector()->at(0));
-        special_propagate();
+    void special_activation(vector<double>& weight, double bias)  {
+        // setActivatedValue(getInputVector()->at(0));
+        // special_propagate();
     }
 
     virtual double getInput(int index) override { return *param; }

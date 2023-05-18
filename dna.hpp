@@ -26,7 +26,7 @@ struct genes {
     int collection_index;               // Type of collection node 
     int expression;                     //if this variable is -1 then the gene will be a mutator node, mutator node are 
                                         //special location within the genome that designate areas where input and output nodes will be 
-    int synapse_time;                   // This is the time required for a specific type of expressed node to fire 
+    double synapse_time;                   // This is the time required for a specific type of expressed node to fire 
     int collective_time;                // This is the time given to a collective node, to gather inputs, after which iw will fire
     int current_time = 0;               // current synapse time, versus max synapse time
     int abs_time = 0;                   // absolute time since gene was released to the wil
@@ -35,6 +35,9 @@ struct genes {
     int level;
     vector<string> past_forms;
     Node* ptr;                          /* The ptr to the node*/
+    vector<double> gene_param;
+    double param_mutator;
+    double bias;
     double mutator_connections;         //The mutator connections, 
     vector<string> node_connections;    //The string of hashes of other nodes(may include itself), that this node is connected too
     std::unordered_map<std::string, int> node_connections_found; // A map to check if a certain node has already been connected too
@@ -42,6 +45,7 @@ struct genes {
     genes& operator=(const genes& right) {
         node_connections.assign(right.node_connections.begin(), right.node_connections.end());
         past_forms.assign(right.past_forms.begin(), right.past_forms.end());
+        gene_param.assign(right.gene_param.begin(), right.gene_param.end());
         node_connections_found = right.node_connections_found;
         ptr = nullptr;
         is_parameter = right.is_parameter;
@@ -51,8 +55,10 @@ struct genes {
         collection_index_mutator = right.collection_index_mutator;
         collection_index = right.collection_index;
         level=right.level;
+        param_mutator=right.param_mutator;
         expression = right.expression;
         hash = right.hash;
+        bias = right.bias;
         expression = right.expression;
         mutator_connections = right.mutator_connections;
         synapse_time = right.synapse_time;
@@ -63,6 +69,39 @@ struct genes {
 
         return *this;
     }
+    genes(){
+        
+    }
+    
+    genes(const genes& right) {
+        node_connections.assign(right.node_connections.begin(), right.node_connections.end());
+        past_forms.assign(right.past_forms.begin(), right.past_forms.end());
+        gene_param = right.gene_param;
+        node_connections_found = right.node_connections_found;
+        ptr = nullptr;
+        is_parameter = right.is_parameter;
+        is_collection = right.is_collection;
+        is_value = right.is_value;
+        is_active = right.is_active;
+        collection_index_mutator = right.collection_index_mutator;
+        collection_index = right.collection_index;
+        level=right.level;
+        param_mutator=right.param_mutator;
+        expression = right.expression;
+        hash = right.hash;
+        expression = right.expression;
+        mutator_connections = right.mutator_connections;
+        synapse_time = right.synapse_time;
+        current_time = right.current_time;
+        parameter_index = right.parameter_index;
+        collective_time = right.collective_time;
+        abs_time = right.abs_time;
+        bias = right.bias;
+
+    }
+    
+
+
 };
 
 struct dna {  // dominant strand of the gene is the one that will be expressed when passed down
@@ -73,19 +112,21 @@ struct dna {  // dominant strand of the gene is the one that will be expressed w
     // vector<double> silent_strand_mutators; do later
     double mutator_add;// Addition of a gene
     double mutator_delete;//deletion of a gene 
-    bool is_dead;//genome has noa active genes 
+    bool is_dead;//genome has noa active genes      
 
+    int division;
     dna& operator=(const dna& right) {
         dominant_strand.clear();
         dominant_strand_mutators.clear();
-        if (right.dominant_strand.size() > 0) {
-            dominant_strand.assign(right.dominant_strand.begin(), right.dominant_strand.end());
-            dominant_strand_mutators.assign(right.dominant_strand_mutators.begin(),
-                                            right.dominant_strand_mutators.end());
-        }
+//        if (right.dominant_strand.size() > 0) {
+//            dominant_strand.assign(right.dominant_strand.begin(), right.dominant_strand.end());
+//            dominant_strand_mutators.assign(right.dominant_strand_mutators.begin(),
+//                                            right.dominant_strand_mutators.end());
+//        }
         mutator_add = right.mutator_add;
         mutator_delete = right.mutator_delete;
         is_dead = right.is_dead;
+        division = right.division;
 
         map.clear();
 
@@ -146,57 +187,63 @@ void mutate_connection(double mutator, dna& genome, genes& x1) {
         float erase = uniformTestRange(0, 1,1000);
         if (erase > 0.3 && x1.node_connections.size() > 0) {
             double index = uniformTest(0, x1.node_connections.size() - 1);
-
+            if(index>0){
             x1.node_connections_found.erase(x1.node_connections.at(index));
             x1.node_connections.erase(x1.node_connections.begin() + index);
+            x1.gene_param.erase(x1.gene_param.begin()+index);
+            }
+
+
         } else if (genome.dominant_strand.size() > 0) {
             double index = uniformTest(0, genome.dominant_strand.size() - 1);
             auto it = x1.node_connections_found.find(genome.dominant_strand.at(index).hash);
+            int level=genome.dominant_strand.at(index).level;
             if (it == x1.node_connections_found.end() && genome.dominant_strand.at(index).expression != -1&&
-            genome.dominant_strand.at(index).level<=x1.level+1&& x1.level-1<=genome.dominant_strand.at(index).level) {
+            ( level<=x1.level+1 && x1.level-1<=level )) {
+                x1.gene_param.push_back(uniformTestRange(-0.2,0.2,10000));
                 x1.node_connections.push_back(genome.dominant_strand.at(index).hash);
                 x1.node_connections_found[genome.dominant_strand.at(index).hash] = 1;
+
+
             }
 
         }
+
 }
 
+void mutate_param(genes& x1, double& param){
+
+    double val=0; 
+    
+mutate_weights(x1.gene_param,x1.param_mutator,0.01);
+mutate_bias(x1.bias, x1.param_mutator, 0.001);
+
+}
 genes* make_random_gene(dna& genome) {
     genes* new_gene = new genes;
-    double param = uniformTest(0,100);
-    // if (param < 10) {
-    //     new_gene->is_parameter = true;
-    //     new_gene->is_value = false;
-    //     new_gene->is_collection = false;
-    //     new_gene->expression = 0;
-    //     new_gene->parameter_index = uniformTestRange(-1, 1, 1000);
-    //     new_gene->synapse_time = uniformTest(1, 9);
+    double param = uniformTest(0,30);
 
-    // } 
-     if (param < 70) {
+    
+    if(param<5){
         new_gene->is_parameter = false;
         new_gene->is_value = true;
         new_gene->is_collection = false;
         new_gene->expression = 1;
         new_gene->synapse_time = uniformTestRange(0,9,1000);
 
-    // } else if (param < 90) {
-    //     new_gene->is_parameter = false;
-    //     new_gene->is_value = false;
-    //     new_gene->is_collection = true;
-    //     new_gene->expression = 2;
-    //     new_gene->synapse_time = uniformTest(1, 9);
-    //     new_gene->collection_index = uniformTest(0, 6);
-    //     new_gene->collection_index_mutator = uniformTestRange(0, 0.1, 1000);
-    //     new_gene->collective_time = 2;
-
-    // } else {
-        new_gene->expression = -1;
+    }
+    else{
+    new_gene->expression = -1;
     }
     new_gene->is_active = true;
     new_gene->hash = generateHash();
     new_gene->ptr = nullptr;
     new_gene->current_time = 0;
+    new_gene->param_mutator=uniformTestRange(0,0.5,1000);
+    new_gene->gene_param.clear();
+    new_gene->synapse_time=uniformTestRange(0,10,1000);
+    new_gene->bias=uniformTestRange(-0.2,0.2,1000);
+
 
     if (param != -1) {
         new_gene->mutator_connections = uniformTestRange(0, 0.0001, 1000);
@@ -208,31 +255,12 @@ genes* make_random_gene(dna& genome) {
 
 genes* instruction_gene(dna& genome, int param) {
     genes* new_gene = new genes;
-    if (param < 30) {
-        new_gene->is_parameter = true;
-        new_gene->is_value = false;
-        new_gene->is_collection = false;
-        new_gene->expression = 0;
-        new_gene->synapse_time = uniformTest(1, 9);
-
-    } else if (param < 70) {
+   if (param < 70) {
         new_gene->is_parameter = false;
         new_gene->is_value = true;
         new_gene->is_collection = false;
         new_gene->expression = 1;
         new_gene->synapse_time = uniformTest(1, 9);
-
-    } else if (param < 95) {
-        new_gene->is_parameter = false;
-        new_gene->is_value = false;
-        new_gene->is_collection = true;
-        new_gene->expression = 2;
-
-        new_gene->collection_index = uniformTest(0, 7);
-
-        new_gene->collection_index_mutator = uniformTestRange(0, 0.1, 1000);
-
-        new_gene->synapse_time = uniformTest(1, 10);
 
     } else {
         new_gene->expression = -1;
@@ -241,7 +269,12 @@ genes* instruction_gene(dna& genome, int param) {
     new_gene->hash = generateHash();
     new_gene->ptr = nullptr;
     new_gene->current_time = 0;
-
+    new_gene->param_mutator=uniformTestRange(0,0.5,1000);
+    new_gene->synapse_time=uniformTestRange(0,10,1000);
+    new_gene->gene_param.clear();
+    new_gene->node_connections.clear();
+    new_gene->node_connections_found.clear();
+    new_gene->bias=uniformTestRange(-0.2,0.2,1000);
 
     return new_gene;
 }
@@ -257,16 +290,35 @@ void mutate_dna(dna& genome) {
         }
 
         if((index-1)>0){
-            ptr->level=genome.dominant_strand.at(index-1).level;
+            if(ptr->expression==-1){
+                ptr->level=genome.dominant_strand.at(index-1).level+1;
+                for(int i=index; i<genome.dominant_strand.size(); i++){
+                    genome.dominant_strand.at(i).level=genome.dominant_strand.at(i).level+1;
+                                        //exit(0);
+                }
+            } 
+            else{
+                ptr->level=genome.dominant_strand.at(index-1).level;
+            }
         }
         else{
-        ptr->level=0;
-        }
+            if(ptr->expression==-1){
+                ptr->level=1;
+                for(int i=index; i<genome.dominant_strand.size(); i++){
+                    genome.dominant_strand.at(i).level=genome.dominant_strand.at(i).level+1;
+                                        //exit(0);
+                }
+            } 
+            else{
+                ptr->level=0;
+            }        }
         genome.dominant_strand.insert(genome.dominant_strand.begin() + index, *ptr);
 
         genome.dominant_strand_mutators.insert(genome.dominant_strand_mutators.begin() + index,
                                                uniformTestRange(0, 0.0001, 1000));
     }
+
+
 
     // int size = genome.dominant_strand_mutators.size();
     // for (int i = 0; i < size; i++) {
@@ -286,14 +338,24 @@ void mutate_dna(dna& genome) {
         int index = uniformTest(0, genome.dominant_strand.size() - 1);
         if (index <= 0) {
             index = 0;
+           if(genome.dominant_strand.at(index).expression==-1){
+            for(int i=index; i<genome.dominant_strand.size(); i++){
+                    genome.dominant_strand.at(i).level=genome.dominant_strand.at(i).level-1;
+                }
+           }
         } else {
+            if(genome.dominant_strand.at(index).expression==-1){
+                for(int i=index; i<genome.dominant_strand.size(); i++){
+                    genome.dominant_strand.at(i).level=genome.dominant_strand.at(i).level-1;
+                }
+            }
             genome.dominant_strand.erase(genome.dominant_strand.begin() + index);
             genome.dominant_strand_mutators.erase(genome.dominant_strand_mutators.begin() + index);
         }
     }
 
     for (int i = 0; i < genome.dominant_strand.size(); i++) {
-        if (1 ) {
+        if (uniformTest(0,500)==1 ) {
             mutate_connection(genome.dominant_strand.at(i).mutator_connections, genome,
                               genome.dominant_strand.at(i));
         }
@@ -304,10 +366,13 @@ void mutate_dna(dna& genome) {
         if (genome.dominant_strand.at(i).is_collection && uniformTest(0, 100) == 5) {
             genome.dominant_strand.at(i).collection_index = uniformTest(0, 7);
         }
+
+        if(genome.dominant_strand.at(i).is_value){
+               mutate_param(genome.dominant_strand.at(i),genome.dominant_strand.at(i).param_mutator);
+        }
     }
     if (genome.dominant_strand.size() == 0) {
         genome.is_dead = true;
-        ;
     }
 }
 dna* make_random_dna() {//you need to fix this
@@ -338,18 +403,21 @@ dna* instruction_dna(int number_of_nodes, int array[], int size) {
         new_dna->dominant_strand.push_back(*ptr);
         new_dna->dominant_strand_mutators.push_back(uniformTestRange(0, 0.001, 1000));
     }
-    new_dna->mutator_add = (double)uniformTestRange(0, 0.01, 100);
-    new_dna->mutator_delete = (double)uniformTestRange(0, 0.001, 100);
+    new_dna->division=count_marker;
+    new_dna->mutator_add = 0;
+    new_dna->mutator_delete = 0;
     new_dna->is_dead = false;
+    for(int i=0; i<100; i++){
+        mutate_dna(*new_dna);
+    }
+
     return new_dna;
 }
 
 dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
     dna* new_dna = new dna;
-    new_dna->mutator_add = 0.01;
-    new_dna->mutator_delete = 0.0001;
-    
-    
+    new_dna->mutator_add =0;
+    new_dna->mutator_delete = 0;
     new_dna->is_dead = false;
     unordered_map<string, int> map;
     if (mater.dominant_strand.size() > matee.dominant_strand.size()) {
@@ -393,11 +461,6 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
                 map[ptr->hash] = 1;
                 ptr->current_time = 0;
                 new_dna->dominant_strand.push_back(*ptr);
-                // if(ptr->abs_time>1000){
-                //     if(return_mutator>0){
-                //         return_mutator=return_mutator-0.0001;
-                //             }
-                //     }
                 new_dna->dominant_strand_mutators.push_back(return_mutator);
             }
         }
@@ -414,6 +477,19 @@ dna* reproduce(dna& mater, dna& matee) {  // come back to this tomorrow morning
             }
         }
     }
+
+
+    int count_marker=0;
+    for (size_t i = 0; i < new_dna->dominant_strand.size(); i++)
+    {
+        if(new_dna->dominant_strand.at(i).expression==-1){
+            count_marker++;
+        }
+        new_dna->dominant_strand.at(i).level=count_marker;
+        
+    }
+    
+    new_dna->division=count_marker;
 
     mutate_dna(*new_dna);
     return new_dna;

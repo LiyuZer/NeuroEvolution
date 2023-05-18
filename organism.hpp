@@ -79,7 +79,6 @@ class organism : public sim_objects {
             }
         }
         x1.past_forms.push_back(s);
-        score=score+50;
     }
 
     }
@@ -136,44 +135,27 @@ class organism : public sim_objects {
             // score=score-0.0001;// this decrease the number of nodes;
         }
 
-        bool found=false;
-        if(past_forms.size()>10){
-            int size=past_forms.size();
-            for(int i=0; i<size; i++){
-                if(past_forms.at(i)==s){
-                    found=true;
-                }
-            }
-            past_forms.erase(past_forms.begin(),past_forms.begin()+1);
-            past_forms.push_back(s);
-        }
-        else{
-            past_forms.push_back(s);
-        }
-
-        if(!found){
-            score=score+1;
-        }
-        for (int i = 0; i < create_nodes.size();i++) {
+        for (int i = 0; i < active_genes.size();i++) {
             // This connects the nodes together, if the node is not a nullptr and if the node does not connect
             // to a node that is a nullptr then make the connection
-            Node* ptr = create_nodes.at(i);
-            if (ptr != nullptr) {
-                for (int m = 0; m < genome->dominant_strand.at(i).node_connections.size(); m++) {
-                    string hash = genome->dominant_strand.at(i).node_connections.at(m);
+            Node* ptr = active_genes.at(i)->ptr;
+            if (ptr != nullptr && active_genes.at(i)->expression!=-1) {
+                for (int m = 0; m < active_genes.at(i)->node_connections.size(); m++) {
+                    string hash = active_genes.at(i)->node_connections.at(m);
                     auto found = genome->map.find(hash);
                     if (found == genome->map.end()) {
-                        genome->dominant_strand.at(i).node_connections.erase(
-                            genome->dominant_strand.at(i).node_connections.begin() + m);
+                        active_genes.at(i)->node_connections.erase(
+                            active_genes.at(i)->node_connections.begin() + m);
                     } else if (genome->map[hash] != nullptr) {
-                        *create_nodes.at(i) >> *(genome->map[hash]);
+                        *active_genes.at(i)->ptr >> *(genome->map[hash]);
                     }
                 }
             }
         }
+
     }
 
-    vector<double>* synapse(vector<double>& food, vector<double>& opt) {
+    vector<double>* synapse(vector<double>& food, vector<double>& opt, int round) {
         output_num.clear();
         optimal.clear();
         int count = 0;
@@ -189,7 +171,7 @@ class organism : public sim_objects {
         vector<genes*> input;
         vector<genes*> output;
 
-        size = 2;
+        size = 3;
         for (int i = 0; i < size; i++) {
             in.push_back(food.at(i));
         }
@@ -204,14 +186,7 @@ class organism : public sim_objects {
                 if (active_genes.at(i)->is_value) {
 
                     if (!found_input && active_genes.at(i)->is_active) {
-                            if (count_input==2)
-                            {
                                 found_input = true;
-
-                            }
-                            else{
-                                count_input++;
-                            }
                     }
                     if (count_food < food.size()) {
                         active_genes.at(i)->ptr->getInputVector()->at(0) =
@@ -222,13 +197,12 @@ class organism : public sim_objects {
                 } else {
                     input.push_back(active_genes.at(i));
                 }
-            } else if (count <= 1 && active_genes.at(i)->expression != -1) {
-
+            } else if (count>= 1 && count< genome->division &&active_genes.at(i)->expression != -1) {
                 if (!found_hidden && active_genes.at(i)->is_active) {
                     found_hidden = true;
                 }
             } else if (active_genes.at(i)->expression != -1 && count >= 2) {
-                if (active_genes.at(i)->is_value && active_genes.at(i)->is_active) {
+                if (active_genes.at(i)->is_value && active_genes.at(i)->is_active && count==genome->division ) {
                     output.push_back(active_genes.at(i));
                     if (!found_output) {
                         found_output = true;
@@ -248,13 +222,27 @@ class organism : public sim_objects {
         }
 
         vector<double>* return_vec = new vector<double>;
-
+        float op=0;
+        // if(round<2000){
+        //     op=0.7;
+        // }
+        // else if(round<4000){
+        //     op=0.4;
+        // }
+        // else{
+        //     op=0.3;
+        // }
+        op=0.2;
         for (int i = 0; i < output.size(); i++) {
-            if (i < optimal.size()) {
+            if (i < optimal.size() && output.at(i)->current_time>0) {
                 if (input.size() > 0) {
-                    double sub = output.at(i)->ptr->getInputVector()->at(0) - optimal.at(i);
-                   double num = exp(-1 * pow(sub, 2) / (2 * pow(1, 2)));
-                    score = num + score;
+                    double sub =optimal.at(i)- output.at(i)->ptr->getInputVector()->at(0) ;
+                    double num = 0;
+
+                   num = exp(-1 * pow(sub, 2) / (2 * pow(op, 2)));
+                   // num=pow(sub+0.001,2);
+                    //num=1/num;
+                    score = (num) + score;
                     output_num.push_back(output.at(i)->ptr->getInputVector()->at(0));
                     out.push_back(output.at(i)->ptr->getInputVector()->at(0));
                 }
@@ -301,13 +289,11 @@ class organism : public sim_objects {
             int size = ptr_1->ptr->getNextVector()->size();
             genes* gene_ptr = ptr_1;
             if (gene_ptr->current_time <= num) {
-                //gene_ptr->current_time != 0 &&
-                    // (gene_ptr->current_time % gene_ptr->synapse_time == 0 ||
-                    //  (gene_ptr->is_collection &&
-                    //   gene_ptr->collective_time <= gene_ptr->ptr->getInputVector()->size()))
-                if (output_now(tanhyper(gene_ptr->ptr->getInputVector()->at(0)*gene_ptr->synapse_time)) ) {
+                if (gene_ptr->current_time>=gene_node_map[ptr]->synapse_time){
                     if (ptr->getNextVector()->size() > 0) {
-                        ptr->special_activation();
+    
+
+                        ptr->special_activation(gene_node_map[ptr]->gene_param,gene_node_map[ptr]->bias );
                     }
                     gene_ptr->current_time++;
                 }
@@ -349,6 +335,14 @@ class organism : public sim_objects {
             cout << "The synapse wait time is " << genome->dominant_strand.at(i).synapse_time << endl;
             cout << "The absolute time of this node is: " << genome->dominant_strand.at(i).abs_time << endl;
             cout << "The level: " << genome->dominant_strand.at(i).level << endl;
+            cout << "The parameter size; " <<genome->dominant_strand.at(i).gene_param.size();
+
+            cout << "The parameter: ";
+            for(int k=0; k<genome->dominant_strand.at(i).gene_param.size(); k++){
+                cout<<genome->dominant_strand.at(i).gene_param.at(k)<<" ";
+            }
+            cout<<endl;
+
             if(past_forms.size()>0){
             cout << "The nearest past_form: " << past_forms.at(0)<< endl;
             }
@@ -456,7 +450,7 @@ class organism : public sim_objects {
     double life;
     double time_since_reproduction;
     int num_of_synapses;
-    float score;
+    double score;
     Network<Node>* main;
     vector<string> past_forms;
     int size;
@@ -513,57 +507,85 @@ static void run_world(int population_sizes[],int num_pop, int max_round, int no_
     vector<double> food;
     vector<double> optimal;
 
-    int array[10];
+    int array[20];
 
-    for(int i=0; i<10; i++){
+    for(int i=0; i<20; i++){
         array[i]=55;
     }
-    array[2]=99;
-        array[7]=99;
+    array[4]=99;
+    array[15]=99;
+ 
+
+
+
+
+
 
 
     for (int i = 0; i < population_sizes[0]; i++) {
-        organism* ptr = new organism(100, main, array, 10);
+        organism* ptr = new organism(100, main, array, 20);
         creatures.push_back(ptr);
-        mutate_dna(*creatures.at(i)->getGenome());
+        //mutate_dna(*creatures.at(i)->getGenome());
     }
 
     int div=(float)max_round/num_pop;
+    float array_num[40];
+    for (size_t i = 0; i < 40; i++)
+    {
+        array_num[i]=uniformTestRange(0,1,100);
+    }
+    
     for(int round = 0; round < num_pop; round++) {
+
         for(int sub_rounds=0; sub_rounds<div; sub_rounds++){
-                for (int k = 0; k < 20; k++) {
+                for (int k = 0; k < 10; k++) {
                     food.clear();
                     optimal.clear();
                     for (int i = 0; i < 1; i++) {
-                            float ks = uniformTestRange(0, 1,1000);
-                            float mult =uniformTestRange(0, 1,1000);
-                            float max = 0;
-                            float less = 0;
-                            if (mult < ks) {
-                                max = 1;
-                                less = 0;
-                            } else {
-                                max = 0;
-                                less = 1;
-                            }
-                            food.push_back(ks);
-                            food.push_back(mult);
-                            optimal.push_back(ks); 
-                            optimal.push_back(mult); 
+
+                        int count_num=0;
+                        // for(int m=0; m<3; m++){
+                        //     double n=uniformTestRange(0.1,1,1);
+                        //     if(n<0.5){
+                        //     }
+                        //     else{
+                        //         count_num++;
+                        //     }
+                        //     food.push_back(n);
+
+                        // }
+
+                        //     for(int m=0; m<3; m++){
+                        //     if(m==count_num-1){
+                        //         optimal.push_back(1);
+                        //     }
+                        //     else{
+                        //         optimal.push_back(0.1);
+                        //     }
+                        // }
+                        for(int m=0; m<3; m++){
+                            double n=uniformTestRange(0,1,1000);
+                            food.push_back(n);
+                            optimal.push_back(n*2);
+
+
                         }
+
+
                         for (int i = 0; i < population_sizes[round]; i++) {
                         organism* ptr = creatures.at(i);
                         if (k == 0) {
                             ptr->express_dna();
                         }
-                            ptr->synapse( food, optimal);
+                            ptr->synapse( food, optimal, sub_rounds);
                     }
                 }
-
+                }
                     sort(creatures.begin(), creatures.end(), compare);
-                    if ((sub_rounds + 1) % 2 == 0) {
+                    if ((sub_rounds + 1) % 10 == 0) {
                         system("clear");
                         creatures.at(0)->pr();
+                       //cout<< creatures.at(0)->getGenome()->dominant_strand.size()<<endl;
                         creatures.at(0)->print();
                     }
 
@@ -572,7 +594,7 @@ static void run_world(int population_sizes[],int num_pop, int max_round, int no_
                                 int choosen_two=uniformTest(0,population_sizes[round]*percentage_size);
 
                                // organism* child = new organism(asexual_reproduce(*creatures.at(choosen_one)->getGenome()), main);
-                               organism* child = new organism(reproduce(*creatures.at(choosen_one)->getGenome(), *creatures.at(choosen_two)->getGenome()), main);
+                               organism* child = new organism(reproduce(*creatures.at(choosen_one)->getGenome(), *creatures.at(choosen_one)->getGenome()), main);
                                 creatures.push_back(child);
                         }
                             for (int i = 0; i < population_sizes[round]; i++) {
@@ -581,8 +603,8 @@ static void run_world(int population_sizes[],int num_pop, int max_round, int no_
                             }
                 }
                 main->clear(0);
-        } 
     }
+}
 
 
 #endif /* Organisms_hpp */

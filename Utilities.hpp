@@ -25,9 +25,9 @@ static double uniformTest(double x, double y) {
 
 
 static double uniformTestRange(double x, double y, int division) {
-    float dif=y-x;
-    float multiple=dif/division;
-    std::uniform_int_distribution<> distr(0, division);  
+    double dif=y-x;
+    double multiple=dif/division;
+    std::uniform_int_distribution<long> distr(0, division);  
     return (double)distr(gen)*multiple+x;
 }
 
@@ -195,8 +195,47 @@ static collectFuncDerivative derivativeFunc[7] = {&derAddition,    &derReLu,    
                                                   &derSubtraction, &derSigmoid, &derTanh};
 
 
-static float tanhyper(float x){
+static double tanhyper(double x){
     return (exp(x)-exp(-1*x))/(exp(x)+exp(-1*x));
+}
+
+static double rellu(double x){
+    if(x>0){
+    return x;
+    }
+    else{
+    return 0;
+    }
+}
+
+static double selu(double x){
+    //
+    if(x<0){
+        double cons=(1.0507009*1.67326324);
+    return (cons*(exp(x)-1));
+
+    }
+    else{
+        return ((double)1.0507009*x);
+    }
+}
+// Function to generate a random double value between min_value and max_value
+double random_double(double min_value, double max_value) {
+    return min_value + (rand() / (double(RAND_MAX)) * (max_value - min_value));
+}
+
+// Function to mutate the weights
+void mutate_weights(std::vector<double> &weights, double mutation_rate, double mutation_range) {
+    for (double &weight : weights) {
+        if (rand() / double(RAND_MAX) < mutation_rate) {
+            weight += random_double(-mutation_range, mutation_range);
+        }
+    }
+}
+void mutate_bias(double &bias, double mutation_rate, double mutation_range) {
+    if (rand() / double(RAND_MAX) < mutation_rate) {
+        bias += random_double(-mutation_range, mutation_range);
+    }
 }
 // static void calculateMeanAndVariance(vector<double> vals, double& mean, double& variance) {
 //     for (int i = 0; i < vals.size(); i++) {
