@@ -1,6 +1,4 @@
 # NeuroEvolution
-Certainly! Here's a short README summary for your neuro-evolution project:
-
 
 Welcome to our neuro-evolution project! This project is a raw implementation that explores the power of neural networks through evolutionary algorithms. We utilize both mutation algorithms and a mix of asexual and sexual crossover mutations to enhance our network over time.
 
